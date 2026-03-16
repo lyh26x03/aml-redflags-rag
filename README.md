@@ -21,7 +21,7 @@ Core question the system answers:
 > Given a transaction scenario described in Chinese, what red flags are present, how certain are we, and which regulatory source supports the assessment?
 > 
 
-本專案以洗錢防制（AML）紅旗辨識為應用場景，建構一套從文件處理到結構化輸出的完整 RAG pipeline。核心挑戰在於：知識庫同時包含英文國際標準（FATF）與中文本地素材，而使用者查詢以中文為主——系統必須跨語言檢索、依文件層級排序，並產出有文件依據的中文評估。系統定位為教育輔助工具，協助理解紅旗指標的定義與適用情境。
+本專案以洗錢防制（AML）紅旗辨識為應用場景，建構一套從文件處理到結構化輸出的完整 RAG pipeline。核心挑戰在於：知識庫同時包含英文國際標準（FATF）與中文本地素材，而使用者查詢以中文為主——系統必須跨語言檢索、依文件層級排序，並產出有文件依據的中文評估。系統定位為教育輔助工具，協助理解紅旗指標的定義與適用情境，並支援具備上下文記憶的多輪追問 (Multi-Turn Conversation)。
 
 ---
 
@@ -31,6 +31,7 @@ Core question the system answers:
 - **Metadata-driven Priority Weighting**：三層文件優先級 core / sector_specific / knowledge_bridge
 - **Cross-lingual Retrieval**：以 multilingual embedding 對齊中英文語意空間，讓中文查詢能有效檢索英文法規文件。
 - **Pre-LLM Gate (Deterministic Guardrail)**：以 rule-based 邏輯在 LLM 生成前攔截超出知識範圍的查詢，將 binary 的範圍判斷從機率性行為中分離。解決了弱模型（Llama-8B）不聽從「拒絕回答」指令的幻覺問題。
+- **Stateful Multi-Turn Conversation (Query Rewrite & State Decoupling)**：不依賴單純的對話紀錄拼接，而是將使用者追問結合歷史狀態（Conversation State）利用 LLM 動態改寫為獨立查詢（Standalone Query），解決 RAG 在多輪對話中常見的「代名詞指代遺失（Catastrophic Forgetting）」與「向量偏移」問題。
 - **Retrieval Stress Test (De-keyworded Queries)**：設計三級語意距離的壓力測試，驗證檢索管線在使用者不使用標準術語時的穩定性與失敗模式。
 
 ---
@@ -72,32 +73,39 @@ aml-redflags-rag/
 
 ## 🏗️ System Architecture
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    INDEXING PIPELINE                     │
-│                                                         │
-│  PDFs ──► load_pdfs()  ──► create_chunks() ──► FAISS   │
-│  (+ metadata layers)       chunk_size=400               │
-│                             overlap=80        + BM25    │
-└─────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────┐
-│                   RETRIEVAL PIPELINE                     │
-│                                                         │
-│  Query ──► Dense Search (FAISS)  ──┐                   │
-│        └─► Sparse Search (BM25)  ──┼─► RRF Fusion      │
-│                                    │   + Priority       │
-│                             retrieved_chunks Weighting  │
-└─────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────┐
-│                  GENERATION PIPELINE                     │
-│                                                         │
-│  Pre-LLM Gate ──► Prompt Template ──► LLM ──► Response │
-│  (scope check)     (structured)    Gemini / Llama3      │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph INDEXING["🗂 indexing pipeline · offline / one-time"]
+        PDF["source PDFs"]
+        CHUNK["chunk + embed\nmultilingual-MiniLM-L12-v2"]
+        INDEX["FAISS + BM25\npriority weighting"]
+        PDF --> CHUNK --> INDEX
+    end
+
+    subgraph LOOP["🔄 multi-turn query loop"]
+        direction TB
+
+        STATE["conv. state\nhistory · active_flags\nscenario ctx · rewrite ctx"]
+
+        QUERY["user query"]
+        REWRITE["query rewrite\nhistory-aware"]
+        GATE["pre-LLM gate\nscope guard"]
+        REFUSE["REFUSE"]
+        HYBRID["hybrid search\nBM25 + FAISS → RRF fusion"]
+        LLM["LLM generation\nLlama-3.1-8B-instant"]
+        RESPONSE["response"]
+
+        STATE -->|inject| REWRITE
+        QUERY --> REWRITE
+        REWRITE --> GATE
+        GATE -->|REFUSE| REFUSE
+        GATE -->|ALLOW| HYBRID
+        HYBRID --> LLM
+        LLM --> RESPONSE
+        RESPONSE -.->|next turn| QUERY
+    end
+
+    INDEX -->|retrieval index| HYBRID
 ```
 
 ### Document Metadata Layers (v2 design)
@@ -145,6 +153,11 @@ aml-redflags-rag/
 
 - **成功邊界**：Dense 能精準處理 Level 3 的極端抽象（例：將「付款流程被篡改」抽象為「一段約定在節點被替換」，MRR=1.0），展現強大的結構對應能力。
 - **失敗邊界**：在案例 S15 中，當查詢從「分析性語域（法律術語）」跳躍至「敘事性語域（日常說故事：'說不清楚哪裡來的財物...'）」，即使沒有跨語言問題，Dense 依然全面失效（MRR=0.0）。這揭示了**「語域轉換 (Register Shift)」比單純的「去關鍵字」更具破壞性**。
+
+**🔍 洞察四：多輪對話的狀態解耦 (State Decoupling in Multi-Turn)**
+- **現象**：在測試多輪追問（Query Rewrite）時，若直接將前一輪的系統輸出（含大量 JSON 結構與評估理由）餵給 8B 模型作為歷史紀錄，會導致模型重構意圖失敗，甚至產生格式雜訊（如輸出帶有 `改寫：` 前綴）。
+- **根因**：輕量級 LLM 在處理高密度結構化資料與自然語言混雜的 Prompt 時，容易發生注意力渙散。
+- **工程解法**：在對話狀態管理中實作「讀寫分離」。系統後台維護嚴格的 `conversation_state` (JSON)，但餵給 Rewrite 模組的歷史紀錄則轉換為純粹的 `content_readable` (自然語言摘要)。此舉大幅提升了輕量模型在多輪意圖重構的穩定性。
 
 ### 3. 檢索失敗分析與優化方向 (Failure Analysis)
 
@@ -226,6 +239,18 @@ Each test case is a realistic transaction scenario with:
 > PDFs are not included in this repository due to file size. Place them in `data/` before running the indexing pipeline.
 >
 > 
+---
+## 🧪 System Evolution / 系統演進
+
+本專案採敏捷迭代開發，逐步解決 RAG 系統在實際應用中的痛點：
+
+- **v1.0 Stateless Baseline**：建立基礎的 Hybrid Search (FAISS + BM25) 與 RRF 融合機制。發現單純的相似度檢索無法區分「法規權威性」。
+- **v2.0 Metadata & Guardrails**：
+  - 引入 **Priority Weighting**：為 Chunk 標籤化 (`core`, `sector_specific`) 並給予權重，確保國際標準(FATF)的排序優於一般教材。
+  - 引入 **Pre-LLM Gate**：以 Rule-based 邏輯在檢索前攔截超出範圍的問題，成功消除了 Llama-3-8B 等輕量模型「無法拒答」的幻覺。
+- **v3.0 Stateful Multi-Turn**：
+  - 引入 **Query Rewrite** 解決多輪追問的向量空間偏移。
+  - 實作 **State Decoupling**：在對話紀錄中分離「JSON 結構化狀態」與「自然語言摘要」，避免 LLM 在讀取歷史時因 JSON 格式產生注意力渙散 (Attention Dilution)。
 ---
 
 ## 🚀 Quick Start
