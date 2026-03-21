@@ -165,6 +165,27 @@ flowchart TD
 - **根因**：輕量級 LLM 在處理高密度結構化資料與自然語言混雜的 Prompt 時，容易發生注意力渙散。
 - **工程解法**：在對話狀態管理中實作「讀寫分離」。系統後台維護嚴格的 `conversation_state` (JSON)，但餵給 Rewrite 模組的歷史紀錄則轉換為純粹的 `content_readable` (自然語言摘要)。此舉大幅提升了輕量模型在多輪意圖重構的穩定性。
 
+**🔍 洞察五：Intent-Routed Multi-Turn — 從「每輪必檢索」到「按需檢索」(v4)**
+
+**現象**：v3 的多輪 pipeline 對每一輪追問都執行完整的 rewrite → gate → retrieve → LLM 流程。但在實際對話中，大量 turn 根本不需要檢索——使用者可能在問歷史裡已有的細節、要求解釋、或突然離題。更危險的是，對離題問題執行檢索會帶回完全不相關的 chunks，誘導 LLM 產生自信但錯誤的輸出。
+
+**設計**：在 rewrite 之前插入 Intent Classification 層，將每一輪分流為四條路徑。分類器提供 rule-based baseline（保守策略：不確定就 RETRIEVE）與 LLM-based 版本（8B few-shot classification），支援透過 `intent_mode` 參數在同一組測試案例上做 A/B 對比。
+
+**A/B 實驗證據**（3 sessions × 3 turns, Llama-3.1-8B-instant）：
+
+| Session | 測試面向 | 🅰️ Baseline（每輪必檢索） | 🅱️ LLM 意圖分流 | 行為差異 |
+| --- | --- | --- | --- | --- |
+| A-T2 | 歷史已有答案的追問 | RETRIEVE → `confirmed` | ANSWER_FROM_HISTORY → `possible` | 省 1 次檢索；assessment 降級 |
+| B-T3 | 離題問題（央行利率） | RETRIEVE → `confirmed` (RF-02, RF-04) | OUT_OF_SCOPE → `refuse` | **攔截 1 次 false positive** |
+| C-T2 | 法規概念釐清 | RETRIEVE → `confirmed` | CLARIFICATION → `possible` | 省 1 次檢索 |
+| C-T3 | 跨 RF 複合追問 | rewrite 丟失「第三方代辦」脈絡 | rewrite 保留三個脈絡 | **改寫品質間接提升** |
+
+**最關鍵的發現是 Session B-T3**：Baseline 模式下，系統對「台灣央行利率」這個與 AML 完全無關的問題——越過了 Gate（因 `covered_topics` 為空時 Gate 不攔截）、撈回無關的虛擬資產 chunks、最終自信地輸出 `confirmed` 並標記 RF-02、RF-04。這是最危險的失敗模式：不是「不知道」而是「堅定地說錯」。Intent Router 在此直接判為 OUT_OF_SCOPE，連 rewrite 都沒觸發，從源頭阻斷了幻覺鏈。
+
+**間接效應（Session C-T3 的改寫品質提升）**：🅱️ 在 Turn 2 走了 CLARIFICATION 路徑，沒有執行檢索，因此 `conversation_state` 中的 `scenario_origin`（學生帳戶情境）沒有被 Turn 2 的檢索結果覆寫。到 Turn 3 時，rewrite 模組拿到的上下文更乾淨，改寫結果從泛化的「什麼是加密貨幣洗錢的紅旗指標？」變為保留完整脈絡的「若第三方代辦者使用加密貨幣轉移資金，該行為涉及幾個紅旗指標？」。
+
+**不掩蓋的設計代價（Tradeoff）**：ANSWER_FROM_HISTORY 路徑因跳過檢索，LLM 手邊沒有原始文件證據，只有前一輪的摘要，因此 assessment 從 `confirmed` 降為 `possible`。在合規場景中，這反而是更誠實的表態——系統明確區分了「有文件佐證的判斷」與「基於記憶的回答」。但若應用場景要求每次回答都有完整文件依據，此路徑需要加入 retrieval fallback 機制。
+
 ### 3. 檢索失敗分析與優化方向 (Failure Analysis)
 
 將測試中的失敗模式歸納為三類，並對應出開發者的解決思維：
