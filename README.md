@@ -75,37 +75,43 @@ aml-redflags-rag/
 
 ```mermaid
 flowchart TD
-    subgraph INDEXING["🗂 indexing pipeline · offline / one-time"]
-        PDF["source PDFs"]
-        CHUNK["chunk + embed\nmultilingual-MiniLM-L12-v2"]
-        INDEX["FAISS + BM25\npriority weighting"]
-        PDF --> CHUNK --> INDEX
+    classDef storage fill:#f8f9fa,stroke:#b0bec5,stroke-dasharray: 5 5
+    classDef logic fill:#ffffff,stroke:#37474f,stroke-width:2px
+    classDef reject fill:#fff1f0,stroke:#cf1322,color:#cf1322
+    classDef fasttrack fill:#e6f7ff,stroke:#1890ff
+    classDef ragpath fill:#f6ffed,stroke:#52c41a
+
+    subgraph INDEXING ["Storage (Offline)"]
+        IDX[("FAISS + BM25<br/>multilingual-MiniLM-L12-v2")]
     end
 
-    subgraph LOOP["🔄 multi-turn query loop"]
-        direction TB
-
-        STATE["conv. state\nhistory · active_flags\nscenario ctx · rewrite ctx"]
-
-        QUERY["user query"]
-        REWRITE["query rewrite\nhistory-aware"]
-        GATE["pre-LLM gate\nscope guard"]
-        REFUSE["REFUSE"]
-        HYBRID["hybrid search\nBM25 + FAISS → RRF fusion"]
-        LLM["LLM generation\nLlama-3.1-8B-instant"]
-        RESPONSE["response"]
-
-        STATE -->|inject| REWRITE
-        QUERY --> REWRITE
-        REWRITE --> GATE
-        GATE -->|REFUSE| REFUSE
-        GATE -->|ALLOW| HYBRID
-        HYBRID --> LLM
-        LLM --> RESPONSE
-        RESPONSE -.->|next turn| QUERY
+    subgraph ROUTING ["Intent Routing & State"]
+        Q([User Query]) --> INTENT{Intent<br/>Classification}
+        STATE[[Conversation State<br/>flags · summary · origin]] -.->|inject| INTENT
     end
 
-    INDEX -->|retrieval index| HYBRID
+    INTENT -- "Out of Scope" --> REFUSE_OOS["Refuse<br/>(0 LLM calls)"]:::reject
+    INTENT -- "History / Clarify" --> LLM_FAST["LLM<br/>history-only prompt"]:::fasttrack
+
+    subgraph RAG_CORE ["RAG Pipeline"]
+        INTENT -- "Retrieve" --> REWRITE["Query Rewrite"]:::ragpath
+        REWRITE --> GATE{Pre-LLM Gate}
+        GATE -- "Allow" --> SEARCH["Hybrid Search<br/>BM25 + FAISS → RRF"]:::ragpath
+        SEARCH --> LLM_RAG["LLM<br/>retrieved context"]:::ragpath
+        GATE -- "Refuse" --> REFUSE_GATE["Refuse<br/>(deterministic)"]:::reject
+    end
+
+    IDX -.->|retrieval| SEARCH
+
+    REFUSE_OOS --> RESP([Response])
+    LLM_FAST --> RESP
+    REFUSE_GATE --> RESP
+    LLM_RAG --> RESP
+
+    RESP -.->|update| STATE
+
+    class INDEXING storage
+    class INTENT,GATE logic
 ```
 
 ### Document Metadata Layers (v2 design)
