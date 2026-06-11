@@ -1,0 +1,2522 @@
+{
+  "test_set": "scenario_queries",
+  "evaluated_at": "2026-02-28T08:07:58.828914",
+  "config": {
+    "embedding_model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+    "chunk_size": 400,
+    "total_chunks": 226,
+    "rrf_k": 60,
+    "priority_weighting": true,
+    "k": 5
+  },
+  "results": {
+    "dense": {
+      "method": "dense",
+      "num_evaluated": 20,
+      "num_skipped": 0,
+      "aggregate": {
+        "mean_precision@3": 0.2667,
+        "mean_precision@5": 0.18,
+        "mean_recall@5": 0.825,
+        "mean_mrr": 0.67
+      },
+      "per_query": [
+        {
+          "query_id": "S01",
+          "query": "一家汽車經銷商卻持續出口大量紡織品到海外，這種買賣項目和公司登記業務完全對不上的情況，是否值得關注？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "fatf_tbm_laundering_red_flags.pdf_p6_c0"
+          ],
+          "retrieved_top5": [
+            "fatf_tbm_laundering_red_flags.pdf_p7_c5",
+            "fatf_tbm_laundering_red_flags.pdf_p7_c4",
+            "fatf_tbm_laundering_red_flags.pdf_p6_c0",
+            "fatf_tbm_laundering_red_flags.pdf_p6_c2",
+            "fatf_tbm_laundering_red_flags.pdf_p5_c3"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 0.3333,
+          "raw_scores": [
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p7_c5",
+              "score": 0.588336
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p7_c4",
+              "score": 0.510892
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p6_c0",
+              "score": 0.480001
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p6_c2",
+              "score": 0.440901
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p5_c3",
+              "score": 0.422673
+            }
+          ]
+        },
+        {
+          "query_id": "S02",
+          "query": "某間公司的組織架構異常複雜，中間層層疊了好幾家在監管寬鬆地區註冊的空殼法人，而且看不出實際業務邏輯，這種組織設計有什麼問題？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "fatf_tbm_laundering_red_flags.pdf_p5_c0"
+          ],
+          "retrieved_top5": [
+            "fatf_tbm_laundering_red_flags.pdf_p5_c6",
+            "fatf_tbm_laundering_red_flags.pdf_p5_c4",
+            "fatf_tbm_laundering_red_flags.pdf_p5_c0",
+            "fatf_virtual_assets_red_flags.pdf_p5_c8",
+            "fatf_tbm_laundering_red_flags.pdf_p6_c1"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 0.3333,
+          "raw_scores": [
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p5_c6",
+              "score": 0.623503
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p5_c4",
+              "score": 0.523751
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p5_c0",
+              "score": 0.52366
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p5_c8",
+              "score": 0.509721
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p6_c1",
+              "score": 0.498394
+            }
+          ]
+        },
+        {
+          "query_id": "S03",
+          "query": "賣方開出來的帳單上寫的錢和雙方本來談好的價錢差了一大截，連運過來的東西數量和品質也跟紙上寫的對不上，這種帳面和實物兜不攏的狀況，算是什麼問題？",
+          "category": "去關鍵字/語義轉換",
+          "relevant_chunks": [
+            "fatf_tbm_laundering_red_flags.pdf_p7_c1"
+          ],
+          "retrieved_top5": [
+            "fatf_tbm_laundering_red_flags.pdf_p7_c1",
+            "fatf_tbm_laundering_red_flags.pdf_p6_c3",
+            "fatf_virtual_assets_red_flags.pdf_p11_c8",
+            "fatf_tbm_laundering_red_flags.pdf_p7_c2",
+            "fatf_virtual_assets_red_flags.pdf_p15_c1"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 1.0,
+          "raw_scores": [
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p7_c1",
+              "score": 0.624416
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p6_c3",
+              "score": 0.550684
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p11_c8",
+              "score": 0.543901
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p7_c2",
+              "score": 0.539586
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p15_c1",
+              "score": 0.528096
+            }
+          ]
+        },
+        {
+          "query_id": "S04",
+          "query": "某貿易商的帳戶看起來只是資金的中繼站——每天進來大量匯款、快速轉走，日終餘額幾乎為零，而且找不到合理的商業解釋，這類帳戶有什麼特徵？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "fatf_tbm_laundering_red_flags.pdf_p8_c1"
+          ],
+          "retrieved_top5": [
+            "fatf_tbm_laundering_red_flags.pdf_p8_c1",
+            "fatf_tbm_laundering_red_flags.pdf_p8_c2",
+            "fatf_virtual_assets_red_flags.pdf_p15_c5",
+            "fatf_tbm_laundering_red_flags.pdf_p6_c4",
+            "fatf_tbm_laundering_red_flags.pdf_p8_c3"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 1.0,
+          "raw_scores": [
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p8_c1",
+              "score": 0.746964
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p8_c2",
+              "score": 0.670303
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p15_c5",
+              "score": 0.623591
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p6_c4",
+              "score": 0.611089
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p8_c3",
+              "score": 0.608194
+            }
+          ]
+        },
+        {
+          "query_id": "S05",
+          "query": "某企業進口貨物的金額，和它對外匯出用於支付進口的銀行轉帳金額有很大落差，這種數字上的不一致意味著什麼？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "fatf_tbm_laundering_red_flags.pdf_p7_c4"
+          ],
+          "retrieved_top5": [
+            "fatf_tbm_laundering_red_flags.pdf_p7_c4",
+            "fatf_tbm_laundering_red_flags.pdf_p8_c3",
+            "fatf_tbm_laundering_red_flags.pdf_p8_c1",
+            "fatf_tbm_laundering_red_flags.pdf_p8_c2",
+            "fatf_tbm_laundering_red_flags.pdf_p7_c5"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 1.0,
+          "raw_scores": [
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p7_c4",
+              "score": 0.785515
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p8_c3",
+              "score": 0.628248
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p8_c1",
+              "score": 0.61545
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p8_c2",
+              "score": 0.614987
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p7_c5",
+              "score": 0.609361
+            }
+          ]
+        },
+        {
+          "query_id": "S06",
+          "query": "一家公司的註冊地址是一棟住宅大樓的信箱地址，而且沒有標明具體的單位號碼，也沒有任何商業或工業空間，這樣的登記地點為什麼引人懷疑？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "fatf_tbm_laundering_red_flags.pdf_p5_c1"
+          ],
+          "retrieved_top5": [
+            "fatf_tbm_laundering_red_flags.pdf_p5_c2",
+            "fatf_tbm_laundering_red_flags.pdf_p5_c1",
+            "fatf_virtual_assets_red_flags.pdf_p14_c6",
+            "fatf_tbm_laundering_red_flags.pdf_p5_c6",
+            "fatf_virtual_assets_red_flags.pdf_p8_c1"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 0.5,
+          "raw_scores": [
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p5_c2",
+              "score": 0.64319
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p5_c1",
+              "score": 0.573508
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p14_c6",
+              "score": 0.54251
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p5_c6",
+              "score": 0.476462
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p8_c1",
+              "score": 0.475679
+            }
+          ]
+        },
+        {
+          "query_id": "S07",
+          "query": "一段已經確認的約定，在即將兌現的節點上被替換成一個陌生的版本——這種「最後一刻的替換」在交易情境中，通常暗示了什麼？",
+          "category": "去關鍵字/語義轉換",
+          "relevant_chunks": [
+            "fatf_tbm_laundering_red_flags.pdf_p8_c0"
+          ],
+          "retrieved_top5": [
+            "fatf_tbm_laundering_red_flags.pdf_p8_c0",
+            "fatf_tbm_laundering_red_flags.pdf_p7_c2",
+            "fatf_tbm_laundering_red_flags.pdf_p8_c4",
+            "fatf_virtual_assets_red_flags.pdf_p18_c5",
+            "fatf_tbm_laundering_red_flags.pdf_p8_c1"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 1.0,
+          "raw_scores": [
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p8_c0",
+              "score": 0.573599
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p7_c2",
+              "score": 0.523699
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p8_c4",
+              "score": 0.50703
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p18_c5",
+              "score": 0.48372
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p8_c1",
+              "score": 0.482734
+            }
+          ]
+        },
+        {
+          "query_id": "S08",
+          "query": "某人在數位貨幣交易平台開戶時存入了一大筆資金，金額與其個人背景和職業收入完全不相稱，而且第一天就開始大量進出交易，這種新用戶行為有什麼可疑之處？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "fatf_virtual_assets_red_flags.pdf_p16_c3"
+          ],
+          "retrieved_top5": [
+            "fatf_virtual_assets_red_flags.pdf_p10_c1",
+            "fatf_virtual_assets_red_flags.pdf_p17_c8",
+            "fatf_virtual_assets_red_flags.pdf_p15_c8",
+            "fatf_virtual_assets_red_flags.pdf_p17_c2",
+            "fatf_virtual_assets_red_flags.pdf_p16_c2"
+          ],
+          "precision@3": 0.0,
+          "precision@5": 0.0,
+          "recall@5": 0.0,
+          "mrr": 0.0,
+          "raw_scores": [
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p10_c1",
+              "score": 0.664991
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p17_c8",
+              "score": 0.62519
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p15_c8",
+              "score": 0.616174
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p17_c2",
+              "score": 0.607035
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p16_c2",
+              "score": 0.600822
+            }
+          ]
+        },
+        {
+          "query_id": "S09",
+          "query": "某人把一件有完整公開來歷的東西，換成一件來歷在結構上就無從查證的東西——這個轉換行為，本身說明了什麼？",
+          "category": "去關鍵字/語義轉換",
+          "relevant_chunks": [
+            "tw_aml_training_slides.pdf_p3_c0",
+            "fatf_virtual_assets_red_flags.pdf_p11_c6"
+          ],
+          "retrieved_top5": [
+            "fatf_tbm_laundering_red_flags.pdf_p7_c3",
+            "fatf_tbm_laundering_red_flags.pdf_p6_c4",
+            "fatf_virtual_assets_red_flags.pdf_p16_c8",
+            "fatf_virtual_assets_red_flags.pdf_p11_c4",
+            "tw_aml_training_slides.pdf_p3_c0"
+          ],
+          "precision@3": 0.0,
+          "precision@5": 0.2,
+          "recall@5": 0.5,
+          "mrr": 0.2,
+          "raw_scores": [
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p7_c3",
+              "score": 0.453133
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p6_c4",
+              "score": 0.445456
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p16_c8",
+              "score": 0.443603
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p11_c4",
+              "score": 0.425041
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p3_c0",
+              "score": 0.400983
+            }
+          ]
+        },
+        {
+          "query_id": "S10",
+          "query": "有人透過暗網關聯的 IP 位址或加密通訊工具登入數位資產服務平台進行交易，這種連線方式為什麼會被視為異常？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "fatf_virtual_assets_red_flags.pdf_p12_c3"
+          ],
+          "retrieved_top5": [
+            "fatf_virtual_assets_red_flags.pdf_p12_c3",
+            "fatf_virtual_assets_red_flags.pdf_p13_c0",
+            "fatf_virtual_assets_red_flags.pdf_p15_c6",
+            "fatf_virtual_assets_red_flags.pdf_p15_c3",
+            "fatf_virtual_assets_red_flags.pdf_p14_c6"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 1.0,
+          "raw_scores": [
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p12_c3",
+              "score": 0.635502
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p13_c0",
+              "score": 0.63501
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p15_c6",
+              "score": 0.574166
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p15_c3",
+              "score": 0.555827
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p14_c6",
+              "score": 0.534392
+            }
+          ]
+        },
+        {
+          "query_id": "S11",
+          "query": "客戶的資金來源直接關聯到已知的網路勒索事件地址，或是來自地下交易市場的錢包，這種資金流向為什麼需要特別警覺？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "fatf_virtual_assets_red_flags.pdf__p17_c4",
+            "fatf_virtual_assets_red_flags.pdf_p19_c5"
+          ],
+          "retrieved_top5": [
+            "fatf_virtual_assets_red_flags.pdf_p19_c5",
+            "fatf_virtual_assets_red_flags.pdf_p10_c1",
+            "fatf_virtual_assets_red_flags.pdf_p11_c4",
+            "fatf_virtual_assets_red_flags.pdf_p16_c1",
+            "tw_aml_training_slides.pdf_p9_c0"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 0.5,
+          "mrr": 1.0,
+          "raw_scores": [
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p19_c5",
+              "score": 0.639988
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p10_c1",
+              "score": 0.637882
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p11_c4",
+              "score": 0.623484
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p16_c1",
+              "score": 0.620482
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p9_c0",
+              "score": 0.618454
+            }
+          ]
+        },
+        {
+          "query_id": "S12",
+          "query": "一位用戶註冊數位資產帳號時提交了經過修改的身分證照片，而且在被要求補充資金來源說明時拒絕回答，這在開戶審查階段代表什麼？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "fatf_virtual_assets_red_flags.pdf_p14_c7",
+            "fatf_virtual_assets_red_flags.pdf_p14_c8"
+          ],
+          "retrieved_top5": [
+            "fatf_virtual_assets_red_flags.pdf_p17_c0",
+            "fatf_virtual_assets_red_flags.pdf_p15_c0",
+            "fatf_virtual_assets_red_flags.pdf_p14_c8",
+            "tw_aml_training_slides.pdf_p5_c0",
+            "fatf_virtual_assets_red_flags.pdf_p10_c0"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 0.5,
+          "mrr": 0.3333,
+          "raw_scores": [
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p17_c0",
+              "score": 0.615462
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p15_c0",
+              "score": 0.579731
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p14_c8",
+              "score": 0.564467
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p5_c0",
+              "score": 0.556828
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p10_c0",
+              "score": 0.554359
+            }
+          ]
+        },
+        {
+          "query_id": "S13",
+          "query": "某客戶習慣把資金匯到一個對數位資產完全沒有監管規範的國家的交易平台，而且那個平台也沒有落實任何身分驗證措施，這和地理風險有什麼關係？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "fatf_virtual_assets_red_flags.pdf_p19_c6"
+          ],
+          "retrieved_top5": [
+            "fatf_virtual_assets_red_flags.pdf_p15_c0",
+            "fatf_virtual_assets_red_flags.pdf_p19_c5",
+            "tw_aml_training_slides.pdf_p6_c0",
+            "fatf_virtual_assets_red_flags.pdf_p11_c4",
+            "fatf_virtual_assets_red_flags.pdf_p19_c6"
+          ],
+          "precision@3": 0.0,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 0.2,
+          "raw_scores": [
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p15_c0",
+              "score": 0.620725
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p19_c5",
+              "score": 0.592912
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p6_c0",
+              "score": 0.589055
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p11_c4",
+              "score": 0.587109
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p19_c6",
+              "score": 0.578566
+            }
+          ]
+        },
+        {
+          "query_id": "S14",
+          "query": "某平台發現有大量看似互不相關的數位錢包，其實全部是從同一個網路位址操控的，這可能代表什麼手法？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "fatf_virtual_assets_red_flags.pdf_p12_c4"
+          ],
+          "retrieved_top5": [
+            "fatf_virtual_assets_red_flags.pdf_p12_c4",
+            "fatf_virtual_assets_red_flags.pdf_p13_c0",
+            "fatf_virtual_assets_red_flags.pdf_p15_c3",
+            "fatf_virtual_assets_red_flags.pdf_p16_c8",
+            "fatf_virtual_assets_red_flags.pdf_p10_c0"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 1.0,
+          "raw_scores": [
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p12_c4",
+              "score": 0.587968
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p13_c0",
+              "score": 0.529478
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p15_c3",
+              "score": 0.52188
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p16_c8",
+              "score": 0.521219
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p10_c0",
+              "score": 0.512912
+            }
+          ]
+        },
+        {
+          "query_id": "S15",
+          "query": "有人先把一批說不清楚哪裡來的財物，委託多人分批代為處理，途中幾度易手，最後以置產或添購名貴物件的方式讓那筆財物看起來出自正當來源——請問法規上用什麼框架來描述這整個過程？",
+          "category": "去關鍵字/語義轉換",
+          "relevant_chunks": [
+            "tw_aml_training_slides.pdf_p2_c0"
+          ],
+          "retrieved_top5": [
+            "fatf_virtual_assets_red_flags.pdf_p15_c1",
+            "fatf_virtual_assets_red_flags.pdf_p14_c8",
+            "fatf_tbm_laundering_red_flags.pdf_p7_c5",
+            "fatf_virtual_assets_red_flags.pdf_p17_c6",
+            "fatf_virtual_assets_red_flags.pdf_p15_c2"
+          ],
+          "precision@3": 0.0,
+          "precision@5": 0.0,
+          "recall@5": 0.0,
+          "mrr": 0.0,
+          "raw_scores": [
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p15_c1",
+              "score": 0.601422
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p14_c8",
+              "score": 0.543887
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p7_c5",
+              "score": 0.543867
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p17_c6",
+              "score": 0.534052
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p15_c2",
+              "score": 0.527159
+            }
+          ]
+        },
+        {
+          "query_id": "S16",
+          "query": "銀行在什麼情況下會直接拒絕讓客戶開戶或進行交易？例如發現客戶疑似使用假名或者拿偽造的證件來辦理，還有哪些類似的拒絕情形？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "tw_aml_training_slides.pdf_p6_c0"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p6_c0",
+            "fatf_virtual_assets_red_flags.pdf_p14_c5",
+            "fatf_virtual_assets_red_flags.pdf_p17_c2",
+            "fatf_virtual_assets_red_flags.pdf_p5_c8",
+            "fatf_virtual_assets_red_flags.pdf_p12_c4"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 1.0,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p6_c0",
+              "score": 0.78591
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p14_c5",
+              "score": 0.596483
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p17_c2",
+              "score": 0.594742
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p5_c8",
+              "score": 0.580546
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p12_c4",
+              "score": 0.568655
+            }
+          ]
+        },
+        {
+          "query_id": "S17",
+          "query": "如果有人在報紙上看到「高價收購銀行帳戶」的廣告，把自己的金融卡和存摺交給對方，即使只是為了賺取小利，這樣做在法律上會面臨什麼後果？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "tw_aml_training_slides.pdf_p9_c0"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p9_c0",
+            "fatf_virtual_assets_red_flags.pdf_p17_c2",
+            "fatf_virtual_assets_red_flags.pdf_p16_c8",
+            "tw_aml_training_slides.pdf_p8_c0",
+            "fatf_virtual_assets_red_flags.pdf_p12_c6"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 1.0,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p9_c0",
+              "score": 0.686154
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p17_c2",
+              "score": 0.630094
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p16_c8",
+              "score": 0.603101
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p8_c0",
+              "score": 0.567326
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p12_c6",
+              "score": 0.5614
+            }
+          ]
+        },
+        {
+          "query_id": "S18",
+          "query": "主管交代員工把一大筆來路不明的現金拆成好幾份、每份都控制在法定申報金額以下分批存入銀行，這樣刻意規避通報機制的行為會觸犯什麼罪？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "tw_aml_training_slides.pdf_p8_c0"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p6_c0",
+            "tw_aml_training_slides.pdf_p8_c0",
+            "tw_aml_training_slides.pdf_p9_c0",
+            "fatf_virtual_assets_red_flags.pdf_p16_c8",
+            "fatf_virtual_assets_red_flags.pdf_p17_c2"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 0.5,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p6_c0",
+              "score": 0.660236
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p8_c0",
+              "score": 0.637375
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p9_c0",
+              "score": 0.631727
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p16_c8",
+              "score": 0.609228
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p17_c2",
+              "score": 0.57698
+            }
+          ]
+        },
+        {
+          "query_id": "S19",
+          "query": "出國旅遊時，除了各國貨幣現鈔和黃金之外，還有哪些可能被利用於資金非法移動的物品也需要在邊境向海關申報？如果沒有誠實申報會怎樣？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "tw_aml_training_slides.pdf_p7_c0"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p7_c0",
+            "fatf_virtual_assets_red_flags.pdf_p5_c1",
+            "fatf_tbm_laundering_red_flags.pdf_p7_c5",
+            "fatf_tbm_laundering_red_flags.pdf_p8_c2",
+            "fatf_virtual_assets_red_flags.pdf_p12_c1"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 1.0,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p7_c0",
+              "score": 0.851323
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p5_c1",
+              "score": 0.636275
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p7_c5",
+              "score": 0.622727
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p8_c2",
+              "score": 0.592431
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p12_c1",
+              "score": 0.582126
+            }
+          ]
+        },
+        {
+          "query_id": "S20",
+          "query": "要在銀行以公司名義開戶時，除了營業登記等基本文件之外，銀行還會要求提供哪些關於公司背後實際控制人的身分資訊？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "tw_aml_training_slides.pdf_p5_c0"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p5_c0",
+            "tw_aml_training_slides.pdf_p6_c0",
+            "fatf_virtual_assets_red_flags.pdf_p14_c8",
+            "fatf_virtual_assets_red_flags.pdf_p11_c5",
+            "fatf_virtual_assets_red_flags.pdf_p10_c0"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 1.0,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p5_c0",
+              "score": 0.734843
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p6_c0",
+              "score": 0.632312
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p14_c8",
+              "score": 0.606329
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p11_c5",
+              "score": 0.563233
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p10_c0",
+              "score": 0.558113
+            }
+          ]
+        }
+      ]
+    },
+    "bm25": {
+      "method": "bm25",
+      "num_evaluated": 20,
+      "num_skipped": 0,
+      "aggregate": {
+        "mean_precision@3": 0.0833,
+        "mean_precision@5": 0.05,
+        "mean_recall@5": 0.25,
+        "mean_mrr": 0.25
+      },
+      "per_query": [
+        {
+          "query_id": "S01",
+          "query": "一家汽車經銷商卻持續出口大量紡織品到海外，這種買賣項目和公司登記業務完全對不上的情況，是否值得關注？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "fatf_tbm_laundering_red_flags.pdf_p6_c0"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p5_c0",
+            "tw_aml_training_slides.pdf_p2_c0",
+            "tw_aml_training_slides.pdf_p9_c0",
+            "tw_aml_training_slides.pdf_p8_c0",
+            "tw_aml_training_slides.pdf_p4_c0"
+          ],
+          "precision@3": 0.0,
+          "precision@5": 0.0,
+          "recall@5": 0.0,
+          "mrr": 0.0,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p5_c0",
+              "score": 25.529073
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p2_c0",
+              "score": 21.506049
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p9_c0",
+              "score": 20.952914
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p8_c0",
+              "score": 18.998432
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p4_c0",
+              "score": 18.413825
+            }
+          ]
+        },
+        {
+          "query_id": "S02",
+          "query": "某間公司的組織架構異常複雜，中間層層疊了好幾家在監管寬鬆地區註冊的空殼法人，而且看不出實際業務邏輯，這種組織設計有什麼問題？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "fatf_tbm_laundering_red_flags.pdf_p5_c0"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p7_c0",
+            "tw_aml_training_slides.pdf_p5_c0",
+            "tw_aml_training_slides.pdf_p8_c0",
+            "tw_aml_training_slides.pdf_p4_c0",
+            "tw_aml_training_slides.pdf_p9_c0"
+          ],
+          "precision@3": 0.0,
+          "precision@5": 0.0,
+          "recall@5": 0.0,
+          "mrr": 0.0,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p7_c0",
+              "score": 32.849207
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p5_c0",
+              "score": 31.966657
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p8_c0",
+              "score": 31.194449
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p4_c0",
+              "score": 30.227855
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p9_c0",
+              "score": 29.374405
+            }
+          ]
+        },
+        {
+          "query_id": "S03",
+          "query": "賣方開出來的帳單上寫的錢和雙方本來談好的價錢差了一大截，連運過來的東西數量和品質也跟紙上寫的對不上，這種帳面和實物兜不攏的狀況，算是什麼問題？",
+          "category": "去關鍵字/語義轉換",
+          "relevant_chunks": [
+            "fatf_tbm_laundering_red_flags.pdf_p7_c1"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p7_c0",
+            "tw_aml_training_slides.pdf_p4_c0",
+            "tw_aml_training_slides.pdf_p2_c0",
+            "tw_aml_training_slides.pdf_p9_c0",
+            "tw_aml_training_slides.pdf_p8_c0"
+          ],
+          "precision@3": 0.0,
+          "precision@5": 0.0,
+          "recall@5": 0.0,
+          "mrr": 0.0,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p7_c0",
+              "score": 59.766032
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p4_c0",
+              "score": 59.478877
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p2_c0",
+              "score": 49.505425
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p9_c0",
+              "score": 45.667562
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p8_c0",
+              "score": 41.298884
+            }
+          ]
+        },
+        {
+          "query_id": "S04",
+          "query": "某貿易商的帳戶看起來只是資金的中繼站——每天進來大量匯款、快速轉走，日終餘額幾乎為零，而且找不到合理的商業解釋，這類帳戶有什麼特徵？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "fatf_tbm_laundering_red_flags.pdf_p8_c1"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p7_c0",
+            "tw_aml_training_slides.pdf_p9_c0",
+            "tw_aml_training_slides.pdf_p8_c0",
+            "tw_aml_training_slides.pdf_p4_c0",
+            "tw_aml_training_slides.pdf_p2_c0"
+          ],
+          "precision@3": 0.0,
+          "precision@5": 0.0,
+          "recall@5": 0.0,
+          "mrr": 0.0,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p7_c0",
+              "score": 45.450145
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p9_c0",
+              "score": 39.587775
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p8_c0",
+              "score": 39.469054
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p4_c0",
+              "score": 35.153191
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p2_c0",
+              "score": 32.262846
+            }
+          ]
+        },
+        {
+          "query_id": "S05",
+          "query": "某企業進口貨物的金額，和它對外匯出用於支付進口的銀行轉帳金額有很大落差，這種數字上的不一致意味著什麼？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "fatf_tbm_laundering_red_flags.pdf_p7_c4"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p7_c0",
+            "tw_aml_training_slides.pdf_p4_c0",
+            "tw_aml_training_slides.pdf_p8_c0",
+            "tw_aml_training_slides.pdf_p9_c0",
+            "tw_aml_training_slides.pdf_p2_c0"
+          ],
+          "precision@3": 0.0,
+          "precision@5": 0.0,
+          "recall@5": 0.0,
+          "mrr": 0.0,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p7_c0",
+              "score": 46.688276
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p4_c0",
+              "score": 34.145131
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p8_c0",
+              "score": 30.532901
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p9_c0",
+              "score": 26.478224
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p2_c0",
+              "score": 25.28269
+            }
+          ]
+        },
+        {
+          "query_id": "S06",
+          "query": "一家公司的註冊地址是一棟住宅大樓的信箱地址，而且沒有標明具體的單位號碼，也沒有任何商業或工業空間，這樣的登記地點為什麼引人懷疑？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "fatf_tbm_laundering_red_flags.pdf_p5_c1"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p7_c0",
+            "tw_aml_training_slides.pdf_p4_c0",
+            "tw_aml_training_slides.pdf_p5_c0",
+            "tw_aml_training_slides.pdf_p8_c0",
+            "tw_aml_training_slides.pdf_p2_c0"
+          ],
+          "precision@3": 0.0,
+          "precision@5": 0.0,
+          "recall@5": 0.0,
+          "mrr": 0.0,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p7_c0",
+              "score": 60.118107
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p4_c0",
+              "score": 50.468306
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p5_c0",
+              "score": 45.918638
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p8_c0",
+              "score": 40.492217
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p2_c0",
+              "score": 38.339689
+            }
+          ]
+        },
+        {
+          "query_id": "S07",
+          "query": "一段已經確認的約定，在即將兌現的節點上被替換成一個陌生的版本——這種「最後一刻的替換」在交易情境中，通常暗示了什麼？",
+          "category": "去關鍵字/語義轉換",
+          "relevant_chunks": [
+            "fatf_tbm_laundering_red_flags.pdf_p8_c0"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p9_c0",
+            "tw_aml_training_slides.pdf_p2_c0",
+            "tw_aml_training_slides.pdf_p6_c0",
+            "tw_aml_training_slides.pdf_p7_c0",
+            "tw_aml_training_slides.pdf_p4_c0"
+          ],
+          "precision@3": 0.0,
+          "precision@5": 0.0,
+          "recall@5": 0.0,
+          "mrr": 0.0,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p9_c0",
+              "score": 39.04211
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p2_c0",
+              "score": 38.199758
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p6_c0",
+              "score": 37.887847
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p7_c0",
+              "score": 35.817063
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p4_c0",
+              "score": 34.921477
+            }
+          ]
+        },
+        {
+          "query_id": "S08",
+          "query": "某人在數位貨幣交易平台開戶時存入了一大筆資金，金額與其個人背景和職業收入完全不相稱，而且第一天就開始大量進出交易，這種新用戶行為有什麼可疑之處？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "fatf_virtual_assets_red_flags.pdf_p16_c3"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p8_c0",
+            "tw_aml_training_slides.pdf_p9_c0",
+            "tw_aml_training_slides.pdf_p7_c0",
+            "tw_aml_training_slides.pdf_p5_c0",
+            "tw_aml_training_slides.pdf_p6_c0"
+          ],
+          "precision@3": 0.0,
+          "precision@5": 0.0,
+          "recall@5": 0.0,
+          "mrr": 0.0,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p8_c0",
+              "score": 35.067461
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p9_c0",
+              "score": 30.818694
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p7_c0",
+              "score": 30.198196
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p5_c0",
+              "score": 24.537011
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p6_c0",
+              "score": 23.8538
+            }
+          ]
+        },
+        {
+          "query_id": "S09",
+          "query": "某人把一件有完整公開來歷的東西，換成一件來歷在結構上就無從查證的東西——這個轉換行為，本身說明了什麼？",
+          "category": "去關鍵字/語義轉換",
+          "relevant_chunks": [
+            "tw_aml_training_slides.pdf_p3_c0",
+            "fatf_virtual_assets_red_flags.pdf_p11_c6"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p8_c0",
+            "tw_aml_training_slides.pdf_p9_c0",
+            "tw_aml_training_slides.pdf_p7_c0",
+            "tw_aml_training_slides.pdf_p4_c0",
+            "tw_aml_training_slides.pdf_p2_c0"
+          ],
+          "precision@3": 0.0,
+          "precision@5": 0.0,
+          "recall@5": 0.0,
+          "mrr": 0.0,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p8_c0",
+              "score": 30.179716
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p9_c0",
+              "score": 29.543042
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p7_c0",
+              "score": 27.264068
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p4_c0",
+              "score": 24.765589
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p2_c0",
+              "score": 23.88827
+            }
+          ]
+        },
+        {
+          "query_id": "S10",
+          "query": "有人透過暗網關聯的 IP 位址或加密通訊工具登入數位資產服務平台進行交易，這種連線方式為什麼會被視為異常？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "fatf_virtual_assets_red_flags.pdf_p12_c3"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p7_c0",
+            "tw_aml_training_slides.pdf_p2_c0",
+            "tw_aml_training_slides.pdf_p6_c0",
+            "tw_aml_training_slides.pdf_p9_c0",
+            "tw_aml_training_slides.pdf_p4_c0"
+          ],
+          "precision@3": 0.0,
+          "precision@5": 0.0,
+          "recall@5": 0.0,
+          "mrr": 0.0,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p7_c0",
+              "score": 26.343213
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p2_c0",
+              "score": 25.05405
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p6_c0",
+              "score": 25.033475
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p9_c0",
+              "score": 23.8303
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p4_c0",
+              "score": 23.660315
+            }
+          ]
+        },
+        {
+          "query_id": "S11",
+          "query": "客戶的資金來源直接關聯到已知的網路勒索事件地址，或是來自地下交易市場的錢包，這種資金流向為什麼需要特別警覺？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "fatf_virtual_assets_red_flags.pdf__p17_c4",
+            "fatf_virtual_assets_red_flags.pdf_p19_c5"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p7_c0",
+            "tw_aml_training_slides.pdf_p4_c0",
+            "tw_aml_training_slides.pdf_p8_c0",
+            "tw_aml_training_slides.pdf_p9_c0",
+            "tw_aml_training_slides.pdf_p5_c0"
+          ],
+          "precision@3": 0.0,
+          "precision@5": 0.0,
+          "recall@5": 0.0,
+          "mrr": 0.0,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p7_c0",
+              "score": 34.015123
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p4_c0",
+              "score": 31.986663
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p8_c0",
+              "score": 31.820119
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p9_c0",
+              "score": 30.875085
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p5_c0",
+              "score": 24.554553
+            }
+          ]
+        },
+        {
+          "query_id": "S12",
+          "query": "一位用戶註冊數位資產帳號時提交了經過修改的身分證照片，而且在被要求補充資金來源說明時拒絕回答，這在開戶審查階段代表什麼？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "fatf_virtual_assets_red_flags.pdf_p14_c7",
+            "fatf_virtual_assets_red_flags.pdf_p14_c8"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p4_c0",
+            "tw_aml_training_slides.pdf_p5_c0",
+            "tw_aml_training_slides.pdf_p9_c0",
+            "tw_aml_training_slides.pdf_p6_c0",
+            "tw_aml_training_slides.pdf_p2_c0"
+          ],
+          "precision@3": 0.0,
+          "precision@5": 0.0,
+          "recall@5": 0.0,
+          "mrr": 0.0,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p4_c0",
+              "score": 40.259332
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p5_c0",
+              "score": 33.509717
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p9_c0",
+              "score": 30.221626
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p6_c0",
+              "score": 29.87335
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p2_c0",
+              "score": 21.269561
+            }
+          ]
+        },
+        {
+          "query_id": "S13",
+          "query": "某客戶習慣把資金匯到一個對數位資產完全沒有監管規範的國家的交易平台，而且那個平台也沒有落實任何身分驗證措施，這和地理風險有什麼關係？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "fatf_virtual_assets_red_flags.pdf_p19_c6"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p4_c0",
+            "tw_aml_training_slides.pdf_p7_c0",
+            "tw_aml_training_slides.pdf_p8_c0",
+            "tw_aml_training_slides.pdf_p5_c0",
+            "tw_aml_training_slides.pdf_p6_c0"
+          ],
+          "precision@3": 0.0,
+          "precision@5": 0.0,
+          "recall@5": 0.0,
+          "mrr": 0.0,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p4_c0",
+              "score": 40.15022
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p7_c0",
+              "score": 37.746564
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p8_c0",
+              "score": 29.887116
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p5_c0",
+              "score": 25.275164
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p6_c0",
+              "score": 23.74948
+            }
+          ]
+        },
+        {
+          "query_id": "S14",
+          "query": "某平台發現有大量看似互不相關的數位錢包，其實全部是從同一個網路位址操控的，這可能代表什麼手法？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "fatf_virtual_assets_red_flags.pdf_p12_c4"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p7_c0",
+            "tw_aml_training_slides.pdf_p9_c0",
+            "tw_aml_training_slides.pdf_p4_c0",
+            "tw_aml_training_slides.pdf_p8_c0",
+            "tw_aml_training_slides.pdf_p2_c0"
+          ],
+          "precision@3": 0.0,
+          "precision@5": 0.0,
+          "recall@5": 0.0,
+          "mrr": 0.0,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p7_c0",
+              "score": 35.547468
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p9_c0",
+              "score": 35.003065
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p4_c0",
+              "score": 28.61859
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p8_c0",
+              "score": 28.213362
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p2_c0",
+              "score": 21.121281
+            }
+          ]
+        },
+        {
+          "query_id": "S15",
+          "query": "有人先把一批說不清楚哪裡來的財物，委託多人分批代為處理，途中幾度易手，最後以置產或添購名貴物件的方式讓那筆財物看起來出自正當來源——請問法規上用什麼框架來描述這整個過程？",
+          "category": "去關鍵字/語義轉換",
+          "relevant_chunks": [
+            "tw_aml_training_slides.pdf_p2_c0"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p4_c0",
+            "tw_aml_training_slides.pdf_p8_c0",
+            "tw_aml_training_slides.pdf_p7_c0",
+            "tw_aml_training_slides.pdf_p3_c0",
+            "tw_aml_training_slides.pdf_p5_c0"
+          ],
+          "precision@3": 0.0,
+          "precision@5": 0.0,
+          "recall@5": 0.0,
+          "mrr": 0.0,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p4_c0",
+              "score": 42.143307
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p8_c0",
+              "score": 41.958496
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p7_c0",
+              "score": 34.975258
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p3_c0",
+              "score": 33.601638
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p5_c0",
+              "score": 32.173605
+            }
+          ]
+        },
+        {
+          "query_id": "S16",
+          "query": "銀行在什麼情況下會直接拒絕讓客戶開戶或進行交易？例如發現客戶疑似使用假名或者拿偽造的證件來辦理，還有哪些類似的拒絕情形？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "tw_aml_training_slides.pdf_p6_c0"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p6_c0",
+            "tw_aml_training_slides.pdf_p4_c0",
+            "tw_aml_training_slides.pdf_p8_c0",
+            "tw_aml_training_slides.pdf_p5_c0",
+            "tw_aml_training_slides.pdf_p9_c0"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 1.0,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p6_c0",
+              "score": 39.657581
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p4_c0",
+              "score": 25.94884
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p8_c0",
+              "score": 20.769534
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p5_c0",
+              "score": 18.378234
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p9_c0",
+              "score": 16.602398
+            }
+          ]
+        },
+        {
+          "query_id": "S17",
+          "query": "如果有人在報紙上看到「高價收購銀行帳戶」的廣告，把自己的金融卡和存摺交給對方，即使只是為了賺取小利，這樣做在法律上會面臨什麼後果？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "tw_aml_training_slides.pdf_p9_c0"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p9_c0",
+            "tw_aml_training_slides.pdf_p2_c0",
+            "tw_aml_training_slides.pdf_p8_c0",
+            "tw_aml_training_slides.pdf_p7_c0",
+            "tw_aml_training_slides.pdf_p6_c0"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 1.0,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p9_c0",
+              "score": 52.243478
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p2_c0",
+              "score": 40.226762
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p8_c0",
+              "score": 39.309438
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p7_c0",
+              "score": 31.41577
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p6_c0",
+              "score": 31.230067
+            }
+          ]
+        },
+        {
+          "query_id": "S18",
+          "query": "主管交代員工把一大筆來路不明的現金拆成好幾份、每份都控制在法定申報金額以下分批存入銀行，這樣刻意規避通報機制的行為會觸犯什麼罪？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "tw_aml_training_slides.pdf_p8_c0"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p8_c0",
+            "tw_aml_training_slides.pdf_p7_c0",
+            "tw_aml_training_slides.pdf_p9_c0",
+            "tw_aml_training_slides.pdf_p2_c0",
+            "tw_aml_training_slides.pdf_p5_c0"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 1.0,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p8_c0",
+              "score": 46.636226
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p7_c0",
+              "score": 33.12619
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p9_c0",
+              "score": 27.674436
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p2_c0",
+              "score": 23.010521
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p5_c0",
+              "score": 16.044231
+            }
+          ]
+        },
+        {
+          "query_id": "S19",
+          "query": "出國旅遊時，除了各國貨幣現鈔和黃金之外，還有哪些可能被利用於資金非法移動的物品也需要在邊境向海關申報？如果沒有誠實申報會怎樣？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "tw_aml_training_slides.pdf_p7_c0"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p7_c0",
+            "tw_aml_training_slides.pdf_p8_c0",
+            "tw_aml_training_slides.pdf_p6_c0",
+            "tw_aml_training_slides.pdf_p9_c0",
+            "tw_aml_training_slides.pdf_p4_c0"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 1.0,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p7_c0",
+              "score": 62.755758
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p8_c0",
+              "score": 32.303677
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p6_c0",
+              "score": 25.294451
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p9_c0",
+              "score": 25.230656
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p4_c0",
+              "score": 22.166554
+            }
+          ]
+        },
+        {
+          "query_id": "S20",
+          "query": "要在銀行以公司名義開戶時，除了營業登記等基本文件之外，銀行還會要求提供哪些關於公司背後實際控制人的身分資訊？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "tw_aml_training_slides.pdf_p5_c0"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p5_c0",
+            "tw_aml_training_slides.pdf_p6_c0",
+            "tw_aml_training_slides.pdf_p9_c0",
+            "tw_aml_training_slides.pdf_p2_c0",
+            "tw_aml_training_slides.pdf_p7_c0"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 1.0,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p5_c0",
+              "score": 53.398208
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p6_c0",
+              "score": 26.639991
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p9_c0",
+              "score": 25.323752
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p2_c0",
+              "score": 24.726803
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p7_c0",
+              "score": 22.825332
+            }
+          ]
+        }
+      ]
+    },
+    "hybrid_rrf": {
+      "method": "hybrid_rrf",
+      "num_evaluated": 20,
+      "num_skipped": 0,
+      "aggregate": {
+        "mean_precision@3": 0.25,
+        "mean_precision@5": 0.18,
+        "mean_recall@5": 0.825,
+        "mean_mrr": 0.6492
+      },
+      "per_query": [
+        {
+          "query_id": "S01",
+          "query": "一家汽車經銷商卻持續出口大量紡織品到海外，這種買賣項目和公司登記業務完全對不上的情況，是否值得關注？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "fatf_tbm_laundering_red_flags.pdf_p6_c0"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p7_c0",
+            "fatf_tbm_laundering_red_flags.pdf_p7_c5",
+            "fatf_tbm_laundering_red_flags.pdf_p7_c4",
+            "fatf_tbm_laundering_red_flags.pdf_p6_c0",
+            "fatf_tbm_laundering_red_flags.pdf_p6_c2"
+          ],
+          "precision@3": 0.0,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 0.25,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p7_c0",
+              "score": 0.024062
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p7_c5",
+              "score": 0.016393
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p7_c4",
+              "score": 0.016129
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p6_c0",
+              "score": 0.015873
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p6_c2",
+              "score": 0.015625
+            }
+          ]
+        },
+        {
+          "query_id": "S02",
+          "query": "某間公司的組織架構異常複雜，中間層層疊了好幾家在監管寬鬆地區註冊的空殼法人，而且看不出實際業務邏輯，這種組織設計有什麼問題？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "fatf_tbm_laundering_red_flags.pdf_p5_c0"
+          ],
+          "retrieved_top5": [
+            "fatf_tbm_laundering_red_flags.pdf_p5_c6",
+            "fatf_tbm_laundering_red_flags.pdf_p5_c4",
+            "fatf_tbm_laundering_red_flags.pdf_p5_c0",
+            "fatf_tbm_laundering_red_flags.pdf_p6_c1",
+            "fatf_tbm_laundering_red_flags.pdf_p5_c5"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 0.3333,
+          "raw_scores": [
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p5_c6",
+              "score": 0.016393
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p5_c4",
+              "score": 0.016129
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p5_c0",
+              "score": 0.015873
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p6_c1",
+              "score": 0.015385
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p5_c5",
+              "score": 0.015152
+            }
+          ]
+        },
+        {
+          "query_id": "S03",
+          "query": "賣方開出來的帳單上寫的錢和雙方本來談好的價錢差了一大截，連運過來的東西數量和品質也跟紙上寫的對不上，這種帳面和實物兜不攏的狀況，算是什麼問題？",
+          "category": "去關鍵字/語義轉換",
+          "relevant_chunks": [
+            "fatf_tbm_laundering_red_flags.pdf_p7_c1"
+          ],
+          "retrieved_top5": [
+            "fatf_tbm_laundering_red_flags.pdf_p7_c1",
+            "fatf_tbm_laundering_red_flags.pdf_p6_c3",
+            "fatf_tbm_laundering_red_flags.pdf_p7_c2",
+            "fatf_tbm_laundering_red_flags.pdf_p8_c1",
+            "fatf_tbm_laundering_red_flags.pdf_p6_c5"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 1.0,
+          "raw_scores": [
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p7_c1",
+              "score": 0.016393
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p6_c3",
+              "score": 0.016129
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p7_c2",
+              "score": 0.015625
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p8_c1",
+              "score": 0.014925
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p6_c5",
+              "score": 0.014706
+            }
+          ]
+        },
+        {
+          "query_id": "S04",
+          "query": "某貿易商的帳戶看起來只是資金的中繼站——每天進來大量匯款、快速轉走，日終餘額幾乎為零，而且找不到合理的商業解釋，這類帳戶有什麼特徵？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "fatf_tbm_laundering_red_flags.pdf_p8_c1"
+          ],
+          "retrieved_top5": [
+            "fatf_tbm_laundering_red_flags.pdf_p8_c1",
+            "fatf_tbm_laundering_red_flags.pdf_p8_c2",
+            "fatf_tbm_laundering_red_flags.pdf_p6_c4",
+            "fatf_tbm_laundering_red_flags.pdf_p8_c3",
+            "fatf_virtual_assets_red_flags.pdf_p15_c5"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 1.0,
+          "raw_scores": [
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p8_c1",
+              "score": 0.016393
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p8_c2",
+              "score": 0.016129
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p6_c4",
+              "score": 0.015625
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p8_c3",
+              "score": 0.015385
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p15_c5",
+              "score": 0.014286
+            }
+          ]
+        },
+        {
+          "query_id": "S05",
+          "query": "某企業進口貨物的金額，和它對外匯出用於支付進口的銀行轉帳金額有很大落差，這種數字上的不一致意味著什麼？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "fatf_tbm_laundering_red_flags.pdf_p7_c4"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p7_c0",
+            "fatf_tbm_laundering_red_flags.pdf_p7_c4",
+            "fatf_tbm_laundering_red_flags.pdf_p8_c3",
+            "fatf_tbm_laundering_red_flags.pdf_p8_c1",
+            "fatf_tbm_laundering_red_flags.pdf_p8_c2"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 0.5,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p7_c0",
+              "score": 0.025055
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p7_c4",
+              "score": 0.016393
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p8_c3",
+              "score": 0.016129
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p8_c1",
+              "score": 0.015873
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p8_c2",
+              "score": 0.015625
+            }
+          ]
+        },
+        {
+          "query_id": "S06",
+          "query": "一家公司的註冊地址是一棟住宅大樓的信箱地址，而且沒有標明具體的單位號碼，也沒有任何商業或工業空間，這樣的登記地點為什麼引人懷疑？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "fatf_tbm_laundering_red_flags.pdf_p5_c1"
+          ],
+          "retrieved_top5": [
+            "fatf_tbm_laundering_red_flags.pdf_p5_c2",
+            "fatf_tbm_laundering_red_flags.pdf_p5_c1",
+            "fatf_tbm_laundering_red_flags.pdf_p5_c6",
+            "fatf_tbm_laundering_red_flags.pdf_p5_c3",
+            "fatf_tbm_laundering_red_flags.pdf_p5_c7"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 0.5,
+          "raw_scores": [
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p5_c2",
+              "score": 0.016393
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p5_c1",
+              "score": 0.016129
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p5_c6",
+              "score": 0.015625
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p5_c3",
+              "score": 0.014925
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p5_c7",
+              "score": 0.014706
+            }
+          ]
+        },
+        {
+          "query_id": "S07",
+          "query": "一段已經確認的約定，在即將兌現的節點上被替換成一個陌生的版本——這種「最後一刻的替換」在交易情境中，通常暗示了什麼？",
+          "category": "去關鍵字/語義轉換",
+          "relevant_chunks": [
+            "fatf_tbm_laundering_red_flags.pdf_p8_c0"
+          ],
+          "retrieved_top5": [
+            "fatf_tbm_laundering_red_flags.pdf_p8_c0",
+            "fatf_tbm_laundering_red_flags.pdf_p7_c2",
+            "fatf_tbm_laundering_red_flags.pdf_p8_c4",
+            "fatf_tbm_laundering_red_flags.pdf_p8_c1",
+            "fatf_tbm_laundering_red_flags.pdf_p7_c4"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 1.0,
+          "raw_scores": [
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p8_c0",
+              "score": 0.016393
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p7_c2",
+              "score": 0.016129
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p8_c4",
+              "score": 0.015873
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p8_c1",
+              "score": 0.015385
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p7_c4",
+              "score": 0.014493
+            }
+          ]
+        },
+        {
+          "query_id": "S08",
+          "query": "某人在數位貨幣交易平台開戶時存入了一大筆資金，金額與其個人背景和職業收入完全不相稱，而且第一天就開始大量進出交易，這種新用戶行為有什麼可疑之處？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "fatf_virtual_assets_red_flags.pdf_p16_c3"
+          ],
+          "retrieved_top5": [
+            "fatf_virtual_assets_red_flags.pdf_p10_c1",
+            "fatf_virtual_assets_red_flags.pdf_p17_c8",
+            "fatf_virtual_assets_red_flags.pdf_p15_c8",
+            "fatf_virtual_assets_red_flags.pdf_p17_c2",
+            "fatf_virtual_assets_red_flags.pdf_p16_c2"
+          ],
+          "precision@3": 0.0,
+          "precision@5": 0.0,
+          "recall@5": 0.0,
+          "mrr": 0.0,
+          "raw_scores": [
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p10_c1",
+              "score": 0.014754
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p17_c8",
+              "score": 0.014516
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p15_c8",
+              "score": 0.014286
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p17_c2",
+              "score": 0.014063
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p16_c2",
+              "score": 0.013846
+            }
+          ]
+        },
+        {
+          "query_id": "S09",
+          "query": "某人把一件有完整公開來歷的東西，換成一件來歷在結構上就無從查證的東西——這個轉換行為，本身說明了什麼？",
+          "category": "去關鍵字/語義轉換",
+          "relevant_chunks": [
+            "tw_aml_training_slides.pdf_p3_c0",
+            "fatf_virtual_assets_red_flags.pdf_p11_c6"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p3_c0",
+            "fatf_tbm_laundering_red_flags.pdf_p7_c3",
+            "fatf_tbm_laundering_red_flags.pdf_p6_c4",
+            "fatf_virtual_assets_red_flags.pdf_p16_c8",
+            "fatf_virtual_assets_red_flags.pdf_p11_c4"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 0.5,
+          "mrr": 1.0,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p3_c0",
+              "score": 0.024072
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p7_c3",
+              "score": 0.016393
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p6_c4",
+              "score": 0.016129
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p16_c8",
+              "score": 0.014286
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p11_c4",
+              "score": 0.014063
+            }
+          ]
+        },
+        {
+          "query_id": "S10",
+          "query": "有人透過暗網關聯的 IP 位址或加密通訊工具登入數位資產服務平台進行交易，這種連線方式為什麼會被視為異常？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "fatf_virtual_assets_red_flags.pdf_p12_c3"
+          ],
+          "retrieved_top5": [
+            "fatf_tbm_laundering_red_flags.pdf_p5_c2",
+            "fatf_virtual_assets_red_flags.pdf_p12_c3",
+            "fatf_virtual_assets_red_flags.pdf_p13_c0",
+            "fatf_virtual_assets_red_flags.pdf_p15_c6",
+            "fatf_virtual_assets_red_flags.pdf_p15_c3"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 0.5,
+          "raw_scores": [
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p5_c2",
+              "score": 0.015152
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p12_c3",
+              "score": 0.014754
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p13_c0",
+              "score": 0.014516
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p15_c6",
+              "score": 0.014286
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p15_c3",
+              "score": 0.014063
+            }
+          ]
+        },
+        {
+          "query_id": "S11",
+          "query": "客戶的資金來源直接關聯到已知的網路勒索事件地址，或是來自地下交易市場的錢包，這種資金流向為什麼需要特別警覺？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "fatf_virtual_assets_red_flags.pdf__p17_c4",
+            "fatf_virtual_assets_red_flags.pdf_p19_c5"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p9_c0",
+            "fatf_virtual_assets_red_flags.pdf_p19_c5",
+            "fatf_tbm_laundering_red_flags.pdf_p4_c7",
+            "fatf_virtual_assets_red_flags.pdf_p10_c1",
+            "fatf_virtual_assets_red_flags.pdf_p11_c4"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 0.5,
+          "mrr": 0.5,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p9_c0",
+              "score": 0.024808
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p19_c5",
+              "score": 0.014754
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p4_c7",
+              "score": 0.014706
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p10_c1",
+              "score": 0.014516
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p11_c4",
+              "score": 0.014286
+            }
+          ]
+        },
+        {
+          "query_id": "S12",
+          "query": "一位用戶註冊數位資產帳號時提交了經過修改的身分證照片，而且在被要求補充資金來源說明時拒絕回答，這在開戶審查階段代表什麼？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "fatf_virtual_assets_red_flags.pdf_p14_c7",
+            "fatf_virtual_assets_red_flags.pdf_p14_c8"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p5_c0",
+            "tw_aml_training_slides.pdf_p6_c0",
+            "fatf_virtual_assets_red_flags.pdf_p17_c0",
+            "fatf_virtual_assets_red_flags.pdf_p15_c0",
+            "fatf_virtual_assets_red_flags.pdf_p14_c8"
+          ],
+          "precision@3": 0.0,
+          "precision@5": 0.2,
+          "recall@5": 0.5,
+          "mrr": 0.2,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p5_c0",
+              "score": 0.025403
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p6_c0",
+              "score": 0.02444
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p17_c0",
+              "score": 0.014754
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p15_c0",
+              "score": 0.014516
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p14_c8",
+              "score": 0.014286
+            }
+          ]
+        },
+        {
+          "query_id": "S13",
+          "query": "某客戶習慣把資金匯到一個對數位資產完全沒有監管規範的國家的交易平台，而且那個平台也沒有落實任何身分驗證措施，這和地理風險有什麼關係？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "fatf_virtual_assets_red_flags.pdf_p19_c6"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p6_c0",
+            "fatf_virtual_assets_red_flags.pdf_p15_c0",
+            "fatf_virtual_assets_red_flags.pdf_p19_c5",
+            "fatf_virtual_assets_red_flags.pdf_p11_c4",
+            "fatf_virtual_assets_red_flags.pdf_p19_c6"
+          ],
+          "precision@3": 0.0,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 0.2,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p6_c0",
+              "score": 0.025006
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p15_c0",
+              "score": 0.014754
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p19_c5",
+              "score": 0.014516
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p11_c4",
+              "score": 0.014063
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p19_c6",
+              "score": 0.013846
+            }
+          ]
+        },
+        {
+          "query_id": "S14",
+          "query": "某平台發現有大量看似互不相關的數位錢包，其實全部是從同一個網路位址操控的，這可能代表什麼手法？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "fatf_virtual_assets_red_flags.pdf_p12_c4"
+          ],
+          "retrieved_top5": [
+            "fatf_virtual_assets_red_flags.pdf_p12_c4",
+            "fatf_virtual_assets_red_flags.pdf_p13_c0",
+            "fatf_virtual_assets_red_flags.pdf_p15_c3",
+            "fatf_virtual_assets_red_flags.pdf_p16_c8",
+            "fatf_virtual_assets_red_flags.pdf_p10_c0"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 1.0,
+          "raw_scores": [
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p12_c4",
+              "score": 0.014754
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p13_c0",
+              "score": 0.014516
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p15_c3",
+              "score": 0.014286
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p16_c8",
+              "score": 0.014063
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p10_c0",
+              "score": 0.013846
+            }
+          ]
+        },
+        {
+          "query_id": "S15",
+          "query": "有人先把一批說不清楚哪裡來的財物，委託多人分批代為處理，途中幾度易手，最後以置產或添購名貴物件的方式讓那筆財物看起來出自正當來源——請問法規上用什麼框架來描述這整個過程？",
+          "category": "去關鍵字/語義轉換",
+          "relevant_chunks": [
+            "tw_aml_training_slides.pdf_p2_c0"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p3_c0",
+            "fatf_tbm_laundering_red_flags.pdf_p7_c5",
+            "fatf_tbm_laundering_red_flags.pdf_p4_c7",
+            "fatf_virtual_assets_red_flags.pdf_p15_c1",
+            "fatf_virtual_assets_red_flags.pdf_p14_c8"
+          ],
+          "precision@3": 0.0,
+          "precision@5": 0.0,
+          "recall@5": 0.0,
+          "mrr": 0.0,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p3_c0",
+              "score": 0.024621
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p7_c5",
+              "score": 0.015873
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p4_c7",
+              "score": 0.014925
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p15_c1",
+              "score": 0.014754
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p14_c8",
+              "score": 0.014516
+            }
+          ]
+        },
+        {
+          "query_id": "S16",
+          "query": "銀行在什麼情況下會直接拒絕讓客戶開戶或進行交易？例如發現客戶疑似使用假名或者拿偽造的證件來辦理，還有哪些類似的拒絕情形？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "tw_aml_training_slides.pdf_p6_c0"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p6_c0",
+            "tw_aml_training_slides.pdf_p9_c0",
+            "fatf_tbm_laundering_red_flags.pdf_p8_c2",
+            "fatf_virtual_assets_red_flags.pdf_p14_c5",
+            "fatf_virtual_assets_red_flags.pdf_p17_c2"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 1.0,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p6_c0",
+              "score": 0.02623
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p9_c0",
+              "score": 0.023736
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p8_c2",
+              "score": 0.015152
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p14_c5",
+              "score": 0.014516
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p17_c2",
+              "score": 0.014286
+            }
+          ]
+        },
+        {
+          "query_id": "S17",
+          "query": "如果有人在報紙上看到「高價收購銀行帳戶」的廣告，把自己的金融卡和存摺交給對方，即使只是為了賺取小利，這樣做在法律上會面臨什麼後果？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "tw_aml_training_slides.pdf_p9_c0"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p9_c0",
+            "tw_aml_training_slides.pdf_p8_c0",
+            "tw_aml_training_slides.pdf_p6_c0",
+            "fatf_virtual_assets_red_flags.pdf_p17_c2",
+            "fatf_virtual_assets_red_flags.pdf_p16_c8"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 1.0,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p9_c0",
+              "score": 0.02623
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p8_c0",
+              "score": 0.025198
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p6_c0",
+              "score": 0.023902
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p17_c2",
+              "score": 0.014516
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p16_c8",
+              "score": 0.014286
+            }
+          ]
+        },
+        {
+          "query_id": "S18",
+          "query": "主管交代員工把一大筆來路不明的現金拆成好幾份、每份都控制在法定申報金額以下分批存入銀行，這樣刻意規避通報機制的行為會觸犯什麼罪？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "tw_aml_training_slides.pdf_p8_c0"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p8_c0",
+            "tw_aml_training_slides.pdf_p9_c0",
+            "tw_aml_training_slides.pdf_p6_c0",
+            "tw_aml_training_slides.pdf_p4_c0",
+            "tw_aml_training_slides.pdf_p3_c0"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 1.0,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p8_c0",
+              "score": 0.026018
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p9_c0",
+              "score": 0.025397
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p6_c0",
+              "score": 0.025055
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p4_c0",
+              "score": 0.024062
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p3_c0",
+              "score": 0.023529
+            }
+          ]
+        },
+        {
+          "query_id": "S19",
+          "query": "出國旅遊時，除了各國貨幣現鈔和黃金之外，還有哪些可能被利用於資金非法移動的物品也需要在邊境向海關申報？如果沒有誠實申報會怎樣？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "tw_aml_training_slides.pdf_p7_c0"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p7_c0",
+            "fatf_tbm_laundering_red_flags.pdf_p7_c5",
+            "fatf_tbm_laundering_red_flags.pdf_p8_c2",
+            "fatf_tbm_laundering_red_flags.pdf_p3_c5",
+            "fatf_virtual_assets_red_flags.pdf_p5_c1"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 1.0,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p7_c0",
+              "score": 0.02623
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p7_c5",
+              "score": 0.015873
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p8_c2",
+              "score": 0.015625
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p3_c5",
+              "score": 0.014925
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p5_c1",
+              "score": 0.014516
+            }
+          ]
+        },
+        {
+          "query_id": "S20",
+          "query": "要在銀行以公司名義開戶時，除了營業登記等基本文件之外，銀行還會要求提供哪些關於公司背後實際控制人的身分資訊？",
+          "category": "場景描述",
+          "relevant_chunks": [
+            "tw_aml_training_slides.pdf_p5_c0"
+          ],
+          "retrieved_top5": [
+            "tw_aml_training_slides.pdf_p5_c0",
+            "tw_aml_training_slides.pdf_p6_c0",
+            "fatf_virtual_assets_red_flags.pdf_p14_c8",
+            "fatf_virtual_assets_red_flags.pdf_p11_c5",
+            "fatf_virtual_assets_red_flags.pdf_p10_c0"
+          ],
+          "precision@3": 0.3333,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 1.0,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p5_c0",
+              "score": 0.02623
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p6_c0",
+              "score": 0.025806
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p14_c8",
+              "score": 0.014286
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p11_c5",
+              "score": 0.014063
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p10_c0",
+              "score": 0.013846
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
