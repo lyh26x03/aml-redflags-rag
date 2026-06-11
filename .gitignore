@@ -1,0 +1,29 @@
+# secrets
+.env
+*.key
+*.pem
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# local migration scratch space
+migration_staging/
+
+# raw/private data
+data/raw/
+data/private/
+*.pdf
+
+# temporary outputs
+*.log
+tmp/
+outputs/
+
+# large/generated retrieval artifacts
+artifacts/index/*
+!artifacts/index/.gitkeep
+*.faiss
+*.pkl
+*.pickle
