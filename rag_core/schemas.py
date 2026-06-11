@@ -58,9 +58,9 @@ class RetrievalDebug(BaseModel):
 class QueryResponse(BaseModel):
     answer: str
     assessment: Assessment
-    identified_flags: List[IdentifiedFlag] = []
-    citations: List[Citation] = []
-    refusal: RefusalInfo = RefusalInfo()
+    identified_flags: List[IdentifiedFlag] = Field(default_factory=list)
+    citations: List[Citation] = Field(default_factory=list)
+    refusal: RefusalInfo = Field(default_factory=RefusalInfo)
     debug: Optional[RetrievalDebug] = None
 
 
@@ -83,5 +83,5 @@ class SourceSummary(BaseModel):
 class SourcesResponse(BaseModel):
     index_version: Optional[str] = None
     total_chunks: int = 0
-    sources: List[SourceSummary] = []
+    sources: List[SourceSummary] = Field(default_factory=list)
     message: Optional[str] = None
