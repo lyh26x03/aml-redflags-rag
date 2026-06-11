@@ -28,6 +28,7 @@ artifacts/index/*
 !artifacts/index/chunks.json
 !artifacts/index/manifest.json
 *.faiss
+faiss_index.bin
 *.pkl
 *.pickle
 
