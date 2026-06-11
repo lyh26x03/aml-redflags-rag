@@ -16,9 +16,9 @@
 | Docker Compose | Unavailable in the current environment; Docker verification remains pending |
 
 The preflight found untracked continuation work in `rag_core/retrieval.py` and
-`rag_core/gate.py`. These files are treated as in-progress migration work and
-must be validated before their stage commits. `.claude/` is local tooling
-configuration and is not part of the migration.
+`rag_core/gate.py`. Both were validated, completed, committed, and pushed in
+their respective stages. `.claude/` remains local tooling configuration and is
+not part of the migration.
 
 ## Migration ledger
 
@@ -29,15 +29,15 @@ configuration and is not part of the migration.
 | `rag_core/loaders.py` | `load_all_indexes` (reshaped for JSON-only artifacts) | Ported and committed (Stage 2) |
 | `artifacts/index/chunks.json` | Hand-written demo sample data | Added and committed (Stage 2) |
 | `artifacts/index/manifest.json` | New demo artifact manifest | Added and committed (Stage 2) |
-| `rag_core/retrieval.py` | `dense_search`, `bm25_search`, `hybrid_search`, `retrieve_contexts`; BM25 construction from indexing notebook | In progress (Stage 3) |
-| `rag_core/gate.py` | `KnowledgeManifest`, `TopicDetector`, `GateDecision`, `GateResult`, `SemanticScopeClassifier`, `pre_llm_gate` | In progress (Stage 4) |
-| `rag_core/generation.py` | `SYSTEM_PROMPT`, `build_user_prompt`, `call_llm`; deterministic mock is new demo code | Pending (Stage 5) |
-| `rag_core/pipeline.py` | `analyze_scenario` single-turn flow | Pending (Stage 6) |
-| `api/main.py` | New FastAPI wrapper per demo spec | Pending (Stage 6) |
-| `tests/test_api_contract.py` | New contract tests per demo spec | Pending (Stage 6) |
-| Docker packaging and smoke test | New demo packaging | Pending (Stage 7) |
-| `indexing/build_data_v2.py` | PDF metadata/loading, chunking, FAISS/BM25 creation, artifact saving | Pending (Stage 8) |
-| README and final documentation | Existing notebook narrative plus runnable service documentation | Pending (Stage 9) |
+| `rag_core/retrieval.py` | `dense_search`, `bm25_search`, `hybrid_search`, `retrieve_contexts`; BM25 construction from indexing notebook | Ported and committed (Stage 3) |
+| `rag_core/gate.py` | `KnowledgeManifest`, `TopicDetector`, `GateDecision`, `GateResult`, `SemanticScopeClassifier`, `pre_llm_gate` | Ported and committed (Stage 4) |
+| `rag_core/generation.py` | `SYSTEM_PROMPT`, `build_user_prompt`, `call_llm`; deterministic mock is new demo code | Ported and committed (Stage 5) |
+| `rag_core/pipeline.py` | `analyze_scenario` single-turn flow | Ported and committed (Stage 6) |
+| `api/main.py` | New FastAPI wrapper per demo spec | Implemented and committed (Stage 6) |
+| `tests/test_api_contract.py` | New contract tests per demo spec | Implemented and committed (Stage 6) |
+| Docker packaging and smoke test | New demo packaging | Implemented and committed; native smoke verified, Docker runtime pending (Stage 7) |
+| `indexing/build_data_v2.py` | PDF metadata/loading, chunking, FAISS/BM25 creation, artifact saving | Ported and committed; private-PDF E2E intentionally not run (Stage 8) |
+| README and final documentation | Existing notebook narrative plus runnable service documentation | Completed (Stage 9) |
 
 ## Deferred and experimental
 
@@ -57,3 +57,12 @@ configuration and is not part of the migration.
 - The repository ships only small demo `chunks.json` and `manifest.json`
   artifacts. Runtime indexes are rebuilt in memory.
 - Display notebooks and archived source notebooks remain untouched.
+
+## Verification summary
+
+- Native compile, contract tests, Uvicorn HTTP checks, and HTTP smoke test pass.
+- Dense requests degrade honestly to BM25 when the embedding model cannot be
+  downloaded in the restricted environment.
+- Docker Compose runtime verification is pending because Docker is unavailable.
+- Live Groq/Gemini calls and private-PDF indexing were not run because no keys
+  or private PDFs are available.

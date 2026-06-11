@@ -6,6 +6,8 @@
 # Python
 __pycache__/
 *.pyc
+.pytest_cache/
+.claude/
 .ipynb_checkpoints/
 
 # local migration scratch space

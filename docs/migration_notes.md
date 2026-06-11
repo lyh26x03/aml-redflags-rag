@@ -1,6 +1,6 @@
 # Migration Notes
 
-> Status: planning complete (2026-06-11). Companion document: [implementation_plan.md](implementation_plan.md).
+> Status: implementation complete on `repo-consolidation` (2026-06-11). Companion document: [implementation_plan.md](implementation_plan.md).
 > Scope of this document: an honest inventory of what exists, what migrates, what stays experimental, and what remains planned.
 
 ## 1. Current repo state
@@ -165,6 +165,37 @@ Colab-only parts to strip: `drive.mount`, `userdata.get()` for API keys, interac
 8. **Windows host**: implementation runs on Windows 11 / PowerShell. No curl-with-JSON examples (escaping); use FastAPI `TestClient`, `tests/smoke_test.py`, and `Invoke-RestMethod`. Docker healthcheck uses `python -c` with urllib (slim image has no curl).
 9. **Sample artifacts are demo data, not FATF source text.** Hand-written, marked `source_type: "sample"`, and described as such in manifest, /sources, and README.
 
-## 11. Proposed first implementation slice
+## 11. Final implementation and acceptance ledger
 
-Stages 1–2 of [implementation_plan.md](implementation_plan.md): tiered requirements + `.env.example` + `rag_core/config.py` + `rag_core/schemas.py`, then sample artifacts + `.gitignore` exceptions + `rag_core/loaders.py`. This yields an importable, testable foundation before any retrieval or API code exists.
+| Area | Final status |
+|---|---|
+| Stages 0–8 | Implemented, committed separately, and pushed to `repo-consolidation` |
+| Config, schemas, sample artifacts, loader | Implemented |
+| BM25, dense FAISS, RRF, priority weighting | Implemented; dense runtime degraded honestly when model download was blocked |
+| Rule-based gate and optional semantic classifier | Implemented; semantic mode remains experimental/off by default |
+| Deterministic mock and key-gated Groq/Gemini REST paths | Implemented; mock verified, live providers not called without keys |
+| Single-turn pipeline and FastAPI endpoints | Implemented and contract-tested |
+| Dockerfile, Compose, smoke test | Implemented; smoke test verified natively, Docker runtime unavailable on this host |
+| Offline indexing CLI | Implemented; compiles and `--help` works; private-PDF E2E intentionally not run |
+| README honesty rewrite | Completed; notebook-only results and features are clearly separated |
+
+Final native verification:
+
+- `python -m compileall` passes for service, tests, and indexing modules.
+- `pytest tests -q` passes.
+- Native Uvicorn `/health`, `/query`, and `/sources` checks pass.
+- `tests/smoke_test.py` passes against native Uvicorn.
+- No tracked `.env`, PDF, pickle, or FAISS artifacts were found.
+
+The literal plan command `python -m compileall .` also descends into the local,
+gitignored `migration_staging/*.py` Colab exports. Those source-reference files
+intentionally contain notebook magics such as `!pip` and are not importable
+Python modules, so the targeted runnable-module compile command is the valid
+acceptance check. The staging sources were not modified or committed.
+
+Unverified by design or environment:
+
+- Docker Compose build/container health: Docker command unavailable.
+- Full dense/hybrid runtime: embedding model download blocked; fallback behavior verified.
+- Groq/Gemini live calls: no API keys.
+- Full-corpus index build: private PDFs unavailable.
