@@ -194,6 +194,24 @@ Later notebook versions explored query rewriting, state decoupling, and intent
 routing to reduce multi-turn false positives. Those experiments remain
 available in the display notebooks but are not part of the service API.
 
+## Evaluation Evidence Chain
+
+The following artifacts make the historical benchmark traceable. They record
+results from the private 226-chunk corpus and are **not** reproducible against
+the 12-chunk demo corpus committed to this repository. Raw PDFs, binary FAISS
+indexes, BM25 pickles, and the full private corpus text are intentionally not
+committed.
+
+| Artifact | Path | Contents |
+|---|---|---|
+| Annotated test set | `eval/queries/scenario_20_annotated.json` | 20 bilingual AML queries with chunk-level ground-truth relevance annotations |
+| Benchmark results | `eval/results/retrieval_scenario20_results.json` | Per-query P@3 / P@5 / Recall@5 / MRR for dense, BM25, and hybrid; source of the table above |
+| Cross-language baseline | `eval/results/retrieval_basic2_v1.json` | 2-query sanity check; shows BM25 Recall@5 = 0.000 on Chinese queries against English corpus |
+| Corpus provenance | `eval/provenance/corpus_index_v2_metadata.json` | Embedding model, chunk size, vector dimension, and total chunk count for the private corpus |
+
+Narrative explanation of the benchmark design, query categories, and
+retrieval failure modes is in [`docs/evaluation_notes.md`](docs/evaluation_notes.md).
+
 ## Repository Guide
 
 ```text
