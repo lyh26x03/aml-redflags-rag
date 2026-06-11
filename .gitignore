@@ -24,6 +24,12 @@ outputs/
 # large/generated retrieval artifacts
 artifacts/index/*
 !artifacts/index/.gitkeep
+# small hand-written demo sample artifacts are intentionally committed
+!artifacts/index/chunks.json
+!artifacts/index/manifest.json
 *.faiss
 *.pkl
 *.pickle
+
+# local virtualenv
+.venv/
