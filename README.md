@@ -1,311 +1,246 @@
-# AML Red Flag RAG System
+# AML Red Flag RAG
 
-> **An end-to-end Hybrid RAG system for AML red flag identification, integrating regulatory source prioritization and metadata-aware retrieval weighting.**
->
+A runnable FastAPI demo and a notebook research archive for evidence-oriented
+anti-money-laundering red-flag analysis.
 
-[![Python](https://img.shields.io/badge/Python-3.10+-blue)](https://python.org)
-[![LLM](https://img.shields.io/badge/LLM-Gemini%20%7C%20Llama3-purple)](https://ai.google.dev/)
-[![Retrieval](https://img.shields.io/badge/Retrieval-FAISS%20%2B%20BM25-orange)](https://faiss.ai/)
-[![Domain](https://img.shields.io/badge/Domain-AML%20%2F%20FinCrime-red)](https://www.fatf-gafi.org/)
+本專案以洗錢防制（AML）紅旗辨識為應用場景，探索中英文文件的跨語言檢索、
+文件層級加權、Pre-LLM Gate，以及具引用依據的結構化判斷。現在的
+`repo-consolidation` 版本將 notebook 中的單輪核心流程整理成可執行的 FastAPI
+與 Docker Compose demo；多輪對話與 intent routing 仍保留在研究 notebook。
 
----
+This is an educational demo, not legal advice, a transaction-monitoring
+system, or a substitute for an AML investigator.
 
-## 🌟 Overview / 專案概述
+## Current Implementation Status
 
-This project builds a Hybrid RAG system designed as an educational tool for identifying money laundering red flags from transaction scenarios. 
+| Capability | Status | Notes |
+|---|---|---|
+| FastAPI `/health`, `/query`, `/sources` | Implemented | Contract-tested single-turn API |
+| BM25 retrieval | Implemented | Rebuilt in memory from `chunks.json` |
+| Dense FAISS retrieval + RRF hybrid | Implemented | Requires full profile and an available embedding model |
+| Honest dense-to-BM25 degradation | Implemented | Exposed through `debug.fallback_used` and `fallback_reason` |
+| Rule-based Pre-LLM Gate | Implemented | TBML, sanctions, and tax-evasion scope refusals |
+| Deterministic mock generation | Implemented | Default; no keys or network calls |
+| Groq / Gemini REST generation | Experimental | Key-gated; failures fall back to mock |
+| Semantic scope classifier | Experimental | Off by default; enable with `ENABLE_SEMANTIC_GATE=true` |
+| Included knowledge corpus | Demo sample only | 12 hand-written bilingual chunks, not FATF source text |
+| Offline private-PDF indexing | Implemented, operator-run | Requires full profile and private PDFs |
+| Multi-turn conversation / intent routing | Planned for service | Notebook-only; see `experiment_rag_v4_display.ipynb` |
+| Evaluation automation | Planned | Historical notebook results are documented below |
 
-The system ingests bilingual AML documents — FATF international standards (English) and Taiwan regulatory training materials (Chinese) — constructs a dual-index (dense + sparse), and generates structured assessments with cited evidence and confidence levels (confirmed / possible / unlikely / refuse).
-
-Core question the system answers:
-
-> Given a transaction scenario described in Chinese, what red flags are present, how certain are we, and which regulatory source supports the assessment?
-> 
-
-本專案以洗錢防制（AML）紅旗辨識為應用場景，建構一套從文件處理到結構化輸出的完整 RAG pipeline。核心挑戰在於：知識庫同時包含英文國際標準（FATF）與中文本地素材，而使用者查詢以中文為主——系統必須跨語言檢索、依文件層級排序，並產出有文件依據的中文評估。系統定位為教育輔助工具，協助理解紅旗指標的定義與適用情境，並支援具備上下文記憶的多輪追問 (Multi-Turn Conversation)。
-
----
-
-## 🛠 Technical Highlights / 技術亮點
-
-- **Hybrid Search (BM25 + FAISS → RRF Fusion)**：雙路召回搭配 Reciprocal Rank Fusion，兼顧精確術語匹配與語意相似度檢索。
-- **Metadata-driven Priority Weighting**：三層文件優先級 core / sector_specific / knowledge_bridge
-- **Cross-lingual Retrieval**：以 multilingual embedding 對齊中英文語意空間，讓中文查詢能有效檢索英文法規文件。
-- **Pre-LLM Gate (Deterministic Guardrail)**：以 rule-based 邏輯在 LLM 生成前攔截超出知識範圍的查詢，將 binary 的範圍判斷從機率性行為中分離。解決了弱模型（Llama-8B）不聽從「拒絕回答」指令的幻覺問題。
-- **Stateful Multi-Turn Conversation (Query Rewrite & State Decoupling)**：不依賴單純的對話紀錄拼接，而是將使用者追問結合歷史狀態（Conversation State）利用 LLM 動態改寫為獨立查詢（Standalone Query），解決 RAG 在多輪對話中常見的「代名詞指代遺失（Catastrophic Forgetting）」與「向量偏移」問題。
-- **Retrieval Stress Test (De-keyworded Queries)**：設計三級語意距離的壓力測試，驗證檢索管線在使用者不使用標準術語時的穩定性與失敗模式。
-
----
-
-## 🗂️ Repository Structure
-
-```
-aml-redflags-rag/
-│
-├── README.md
-├── requirements.txt
-├── .gitignore
-│
-├── indexing/                        # Indexing Pipeline (Write once)
-│   └── build_data_v2.py             #   PDF → Chunk → FAISS + BM25
-│
-├── experiments/                     # Retrieval + Generation Experiments
-│   ├── experiment_rag_v1.ipynb      #   v1: Dense + BM25 + RRF → LLM
-│   └── experiment_rag_v2.py         #   v2: + metadata layers, priority weighting, pre-LLM gate
-│
-├── eval/                            # Evaluation Design
-│   ├── test_cases.py                #   8 end-to-end scenario test cases (RF-01 ~ RF-08)
-│   └── queries/
-│       ├── basic_50.json            #   Basic retrieval: exact terms, concepts, data
-│       ├── scenario_20.json         #   Scenario-based: multi-hop reasoning
-│       ├── list_15.json             #   List-type: enumerate all red flags of X
-│       └── cross_chunk_10.json      #   Cross-chunk: info spans multiple chunks
-│
-├── artifacts/                       # Reproducibility artifacts
-│   └── chunks.json                  #   Pre-built chunk store (v2 config)
-│
-└── docs/
-    ├── pipeline_design.md           # Architecture decisions & rationale
-    ├── experiment_log.md            # Experiment changelog (v1 → v2)
-    └── naming_convention.md         # Coding standards & terminology
-```
-
----
-
-## 🏗️ System Architecture
+## Architecture
 
 ```mermaid
-flowchart TD
-    classDef storage fill:#f8f9fa,stroke:#b0bec5,stroke-dasharray: 5 5
-    classDef logic fill:#ffffff,stroke:#37474f,stroke-width:2px
-    classDef reject fill:#fff1f0,stroke:#cf1322,color:#cf1322
-    classDef fasttrack fill:#e6f7ff,stroke:#1890ff
-    classDef ragpath fill:#f6ffed,stroke:#52c41a
-
-    subgraph INDEXING ["Storage (Offline)"]
-        IDX[("FAISS + BM25<br/>multilingual-MiniLM-L12-v2")]
-    end
-
-    subgraph ROUTING ["Intent Routing & State"]
-        Q([User Query]) --> INTENT{Intent<br/>Classification}
-        STATE[[Conversation State<br/>flags · summary · origin]] -.->|inject| INTENT
-    end
-
-    INTENT -- "Out of Scope" --> REFUSE_OOS["Refuse<br/>(0 LLM calls)"]:::reject
-    INTENT -- "History / Clarify" --> LLM_FAST["LLM<br/>history-only prompt"]:::fasttrack
-
-    subgraph RAG_CORE ["RAG Pipeline"]
-        INTENT -- "Retrieve" --> REWRITE["Query Rewrite"]:::ragpath
-        REWRITE --> GATE{Pre-LLM Gate}
-        GATE -- "Allow" --> SEARCH["Hybrid Search<br/>BM25 + FAISS → RRF"]:::ragpath
-        SEARCH --> LLM_RAG["LLM<br/>retrieved context"]:::ragpath
-        GATE -- "Refuse" --> REFUSE_GATE["Refuse<br/>(deterministic)"]:::reject
-    end
-
-    IDX -.->|retrieval| SEARCH
-
-    REFUSE_OOS --> RESP([Response])
-    LLM_FAST --> RESP
-    REFUSE_GATE --> RESP
-    LLM_RAG --> RESP
-
-    RESP -.->|update| STATE
-
-    class INDEXING storage
-    class INTENT,GATE logic
+flowchart LR
+    Q["POST /query"] --> G{"Rule-based gate"}
+    G -->|refuse| R["Structured refusal"]
+    G -->|allow| RET["BM25 / Dense / Hybrid RRF"]
+    RET --> GEN["Mock or key-gated live generation"]
+    GEN --> OUT["Assessment + flags + citations + debug"]
+    ART["chunks.json + manifest.json"] --> RET
 ```
 
-### Document Metadata Layers (v2 design)
+Retrieval uses the notebook's RRF formula, `1 / (60 + rank)`, followed by
+`retrieval_priority` weighting. The full profile builds an in-memory normalized
+FAISS `IndexFlatIP`; the lite profile runs BM25 and labels dense/hybrid requests
+as fallbacks.
 
-| Layer | Documents | `retrieval_priority` | Role |
-| --- | --- | --- | --- |
-| `core` | FATF TBML Red Flags | 1.0 | Authoritative international standard |
-| `sector_specific` | FATF Virtual Assets Red Flags | 0.9 | Domain extension |
-| `knowledge_bridge` | TW AML Training Slides | 0.8 | Local regulation + explainability |
+## Quick Start: Native Python
 
----
+Python 3.11 is the container target. Python 3.12 was used for the native
+verification recorded in this repository.
 
-### 📊 Retrieval Benchmarking (The Science)
+Full profile, including dense retrieval:
 
-為了驗證系統在真實場景中的檢索能力，本專案設計了 **`scenario_20` 壓力測試集**。
+```powershell
+python -m venv .venv
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+Copy-Item .env.example .env
+.venv\Scripts\python.exe -m uvicorn api.main:app --reload
+```
 
-此測試刻意在某幾題採用「去關鍵字（De-keyworded）」策略，將查詢分為三級語義距離（從「保留法規術語」到「完全口語化與抽象化」），藉此探測模型語意泛化的邊界。
+Lightweight profile, with honest BM25 fallback:
 
-### 1. 測試設計與數據表現 (Top-K=5)
+```powershell
+python -m venv .venv
+.venv\Scripts\python.exe -m pip install -r requirements-lite.txt
+Copy-Item .env.example .env
+.venv\Scripts\python.exe -m uvicorn api.main:app --reload
+```
 
-測試涵蓋三個語義抽象層級：Level 1（保留術語） → Level 2（行為描述） → Level 3（極端抽象比喻）。
-
-| **檢索策略** | **P@3** | **P@5** | **Recall@5** | **MRR** |
-| --- | --- | --- | --- | --- |
-| **Dense (FAISS)** | 0.267 | 0.180 | **0.825** | **0.670** |
-| **BM25** | 0.083 | 0.050 | 0.250 | 0.250 |
-| **Hybrid (RRF)** | 0.250 | 0.180 | **0.825** | 0.649 |
-
-> *註：因多數題目僅 1 個 Gold Chunk，P@5 理論上限為 0.2。數據顯示 **Dense 主導了檢索效能**，而 Hybrid (RRF) 反而導致 MRR 微幅下降。*
-> 
-
-### 2. 核心工程洞察 (Engineering Insights)
-
-**🔍 洞察一：BM25 的跨語言數學約束 (Cross-lingual Lexical Trap)**
-
-- **現象**：BM25 在 14 題跨語言查詢（中文問 → 英文答）中召回率為 0，且 Top-5 全數錯誤指向語料庫中唯一的中文文件（訓練投影片）。
-- **根因**：這並非模型能力不足，而是 **Lexical Matching 的數學限制**。當中英文 token 交集為空時，BM25 只能在中文子空間內給分，形成「高頻通用詞吸引效應」。
-
-**🔍 洞察二：RRF 融合在系統性偏差下的污染效應 (Hybrid Noise)**
-
-- **現象**：在傳統認知中，Hybrid Search 總能提升表現；但在本專案，Hybrid 的 MRR (0.649) 低於純 Dense (0.670)。
-- **根因**：RRF 的前提是「錯誤互補」。但在此場景下，BM25 產生的是**指向同一份文件的系統性偏差**。這使得 BM25 不僅沒提供增益，反而將錯誤結果注入 RRF，稀釋了 Dense 原本正確的排名（例：案例 S01 的正解被從第 3 名擠到第 4 名）。
-
-**🔍 洞察三：Embedding 語意泛化的極限 (Semantic vs. Register Shift)**
-
-- **成功邊界**：Dense 能精準處理 Level 3 的極端抽象（例：將「付款流程被篡改」抽象為「一段約定在節點被替換」，MRR=1.0），展現強大的結構對應能力。
-- **失敗邊界**：在案例 S15 中，當查詢從「分析性語域（法律術語）」跳躍至「敘事性語域（日常說故事：'說不清楚哪裡來的財物...'）」，即使沒有跨語言問題，Dense 依然全面失效（MRR=0.0）。這揭示了**「語域轉換 (Register Shift)」比單純的「去關鍵字」更具破壞性**。
-
-**🔍 洞察四：多輪對話的狀態解耦 (State Decoupling in Multi-Turn)**
-- **現象**：在測試多輪追問（Query Rewrite）時，若直接將前一輪的系統輸出（含大量 JSON 結構與評估理由）餵給 8B 模型作為歷史紀錄，會導致模型重構意圖失敗，甚至產生格式雜訊（如輸出帶有 `改寫：` 前綴）。
-- **根因**：輕量級 LLM 在處理高密度結構化資料與自然語言混雜的 Prompt 時，容易發生注意力渙散。
-- **工程解法**：在對話狀態管理中實作「讀寫分離」。系統後台維護嚴格的 `conversation_state` (JSON)，但餵給 Rewrite 模組的歷史紀錄則轉換為純粹的 `content_readable` (自然語言摘要)。此舉大幅提升了輕量模型在多輪意圖重構的穩定性。
-
-**🔍 洞察五：Intent-Routed Multi-Turn — 從「每輪必檢索」到「按需檢索」(v4)**
-
-**現象**：v3 的多輪 pipeline 對每一輪追問都執行完整的 rewrite → gate → retrieve → LLM 流程。但在實際對話中，大量 turn 根本不需要檢索——使用者可能在問歷史裡已有的細節、要求解釋、或突然離題。更危險的是，對離題問題執行檢索會帶回完全不相關的 chunks，誘導 LLM 產生自信但錯誤的輸出。
-
-**設計**：在 rewrite 之前插入 Intent Classification 層，將每一輪分流為四條路徑。分類器提供 rule-based baseline（保守策略：不確定就 RETRIEVE）與 LLM-based 版本（8B few-shot classification），支援透過 `intent_mode` 參數在同一組測試案例上做 A/B 對比。
-
-**A/B 實驗證據**（3 sessions × 3 turns, Llama-3.1-8B-instant）：
-
-| Session | 測試面向 | 🅰️ Baseline（每輪必檢索） | 🅱️ LLM 意圖分流 | 行為差異 |
-| --- | --- | --- | --- | --- |
-| A-T2 | 歷史已有答案的追問 | RETRIEVE → `confirmed` | ANSWER_FROM_HISTORY → `possible` | 省 1 次檢索；assessment 降級 |
-| B-T3 | 離題問題（央行利率） | RETRIEVE → `confirmed` (RF-02, RF-04) | OUT_OF_SCOPE → `refuse` | **攔截 1 次 false positive** |
-| C-T2 | 法規概念釐清 | RETRIEVE → `confirmed` | CLARIFICATION → `possible` | 省 1 次檢索 |
-| C-T3 | 跨 RF 複合追問 | rewrite 丟失「第三方代辦」脈絡 | rewrite 保留三個脈絡 | **改寫品質間接提升** |
-
-**最關鍵的發現是 Session B-T3**：Baseline 模式下，系統對「台灣央行利率」這個與 AML 完全無關的問題——越過了 Gate（因 `covered_topics` 為空時 Gate 不攔截）、撈回無關的虛擬資產 chunks、最終自信地輸出 `confirmed` 並標記 RF-02、RF-04。這是最危險的失敗模式：不是「不知道」而是「堅定地說錯」。Intent Router 在此直接判為 OUT_OF_SCOPE，連 rewrite 都沒觸發，從源頭阻斷了幻覺鏈。
-
-**間接效應（Session C-T3 的改寫品質提升）**：🅱️ 在 Turn 2 走了 CLARIFICATION 路徑，沒有執行檢索，因此 `conversation_state` 中的 `scenario_origin`（學生帳戶情境）沒有被 Turn 2 的檢索結果覆寫。到 Turn 3 時，rewrite 模組拿到的上下文更乾淨，改寫結果從泛化的「什麼是加密貨幣洗錢的紅旗指標？」變為保留完整脈絡的「若第三方代辦者使用加密貨幣轉移資金，該行為涉及幾個紅旗指標？」。
-
-**不掩蓋的設計代價（Tradeoff）**：ANSWER_FROM_HISTORY 路徑因跳過檢索，LLM 手邊沒有原始文件證據，只有前一輪的摘要，因此 assessment 從 `confirmed` 降為 `possible`。在合規場景中，這反而是更誠實的表態——系統明確區分了「有文件佐證的判斷」與「基於記憶的回答」。但若應用場景要求每次回答都有完整文件依據，此路徑需要加入 retrieval fallback 機制。
-
-### 3. 檢索失敗分析與優化方向 (Failure Analysis)
-
-將測試中的失敗模式歸納為三類，並對應出開發者的解決思維：
-
-| **失敗模式** | **典型案例** | **核心痛點** | **工程優化路徑 (Roadmap)** |
-| --- | --- | --- | --- |
-| **語言邊界鎖死** | S01-S14 (BM25) | 中文問項與英文法規無 Token 重疊 | **語言路由機制**：自動判定 Query 語言與目標文件語言，動態調整 BM25 權重。 |
-| **語域轉換失效** | S15 (Dense) | 「說故事」的語氣模型讀不懂 | **Query Expansion**：請 LLM 先將使用者的日常口語轉化為「法規關鍵字」後再檢索。 |
-| **文件內精度不足** | S08 (Dense) | 找對了文件，但正解落在隔壁段落 | **切片策略優化**：調整 Chunk 大小或增加重疊度 (Overlap)，避免語意被切斷。 |
-
-### 🛠️ 4. 為什麼仍然保留 BM25？ (Design Rationale)
-
-雖然在目前的數據中 BM25 的分數偏低，但這是基於**「當前語料庫 70% 為英文」**的結構性結果。
-
-- **戰略儲備**：本系統的願景是處理完整的 AML 知識庫。當未來引入大量**「中文法規本文」**（作為 Core 層級）時，BM25 對於「實質受益人」、「層次化」等專有名詞的精準抓取，將會是不可或缺的核心戰力。
-- **拒絕過度優化**：我們選擇在架構中保留 `use_bm25` 開關，而非直接移除，是為了保留系統對環境變動（Distribution Shift）的彈性。這確保了當語料分佈改變時，系統只需調整參數即可適配，不需重寫邏輯。
-
----
-
-### 🎯 System Verification (End-to-End Logic)
-
-Each test case is a realistic transaction scenario with:
-
-- `expected_assessment`: `confirmed` / `possible` / `refuse`
-- `expected_flags`: list of red flag codes (e.g. `["RF-01", "RF-02"]`)
-- `required_sources`: which documents the answer must cite
-
-| Test | Red Flag | Confirmed | Possible |
-| --- | --- | --- | --- |
-| RF-01 | Structuring (門檻拆分) | ✓ 1A | ✓ 1B |
-| RF-02 | Rapid Movement (快速流轉) | ✓ 2A | ✓ 2B |
-| RF-03 | Abnormal Cash (現金密集) | ✓ 3A | ✓ 3B |
-| RF-04 | Third-Party Operation (第三人代辦) | ✓ 4A | ✓ 4B |
-| RF-05 | Cross-Border High Risk (跨境高風險) | ✓ 5A | ✓ 5B |
-| RF-06 | Profile Mismatch (與身分不符) | ✓ 6A | ✓ 6B |
-| RF-07 | Virtual Asset Anonymity (虛擬資產匿名) | ✓ 7A | ✓ 7B |
-| RF-08 | Opaque Ownership / Out-of-Scope | ✓ 8A | refuse 8B |
-
-在生成階段，本專案的重點並非依賴龐大參數模型的湧現能力，而是建立**可靠的工程防禦機制（Guardrails）**，確保系統的輸出下限。
-
-**1. Deterministic Pre-LLM Gate（確定性安全門控）**
-
-- **問題**：開發初期發現，當遇到超出知識庫範圍的問題（例如：貿易型洗錢 TBML）時，小型模型（如 Llama-3.1-8B）經常忽略 System Prompt 中的 `REFUSE` 指令，試圖基於預訓練知識進行幻覺生成。
-- **實作**：在 LLM 推論前介入一層純 Python 的 Rule-based 攔截器。透過 `KnowledgeManifest` 定義知識邊界，一旦偵測到 `not_covered_topics` 且缺乏相關證據，系統會直接中斷並回傳標準化的拒答 JSON，**完全繞過 LLM**。
-- **成果**：在超出範圍的負面測試案例（如 RF-08B）中，達到 100% 的準確拒絕率。
-
-**2. 使用「弱模型」作為壓測探針 (Model Selection as a Probe)**
-
-- 系統支援無縫切換多種模型（Llama-3.3-70B, Gemini 2.0 Flash 等）。但在開發核心邏輯時，我們**刻意選擇能力較弱的 Llama-3.1-8B 作為主力測試模型**。
-- **設計意圖**：大型模型強大的預訓練知識會「掩蓋」檢索系統的漏失；使用 8B 模型能迫使我們直面真實的 Retrieval 品質，確保系統的準確性是建立在「檢索到的法規依據」上，而非模型的隨機發揮。
-
-**3. 雙重結構化約束 (Dual Structural Constraints)**
-
-- 結合 Prompt 層級的 JSON Schema 定義與 API 層級的強制輸出模式（如 Groq `response_format={"type": "json_object"}`），確保系統輸出的評估結果（Confirmed / Possible / Unlikely / Refuse）能 100% 被下游應用程式解析。
-
----
-
-## 🛠️ Tech Stack / 技術棧
-
-| Component | Technology |
-| --- | --- |
-| PDF Parsing | `pypdf` |
-| Chunking | `langchain-text-splitters` `RecursiveCharacterTextSplitter` |
-| Embedding | `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` |
-| Dense Index | `FAISS` (`IndexFlatIP`, normalized cosine) |
-| Sparse Index | `rank_bm25` (`BM25Okapi`), `jieba` for Chinese tokenization |
-| LLM | Google Gemini 2.0 Flash / Llama-3.3-70B (Groq) |
-| Runtime | Google Colab |
-
-## 📁 Source Documents / 文件來源
-
-| Document | Category | Language |
-| --- | --- | --- |
-| [FATF: Trade-Based Money Laundering Risk Indicators](https://www.fatf-gafi.org/en/publications/Methodsandtrends/Trade-based-money-laundering-risk-indicators.html) | `core` | EN |
-| [FATF: Virtual Assets Red Flag Indicators](https://www.fatf-gafi.org/en/publications/Fatfrecommendations/Virtual-assets-red-flag-indicators.html) | `sector_specific` | EN |
-| Taiwan AML Training Slides (洗錢防制訓練教材) | `knowledge_bridge` | ZH |
-
-> PDFs are not included in this repository due to file size. Place them in `data/` before running the indexing pipeline.
->
-> 
----
-## 🧪 System Evolution / 系統演進
-
-本專案採敏捷迭代開發，逐步解決 RAG 系統在實際應用中的痛點：
-
-- **v1.0 Stateless Baseline**：建立基礎的 Hybrid Search (FAISS + BM25) 與 RRF 融合機制。發現單純的相似度檢索無法區分「法規權威性」。
-- **v2.0 Metadata & Guardrails**：
-  - 引入 **Priority Weighting**：為 Chunk 標籤化 (`core`, `sector_specific`) 並給予權重，確保國際標準(FATF)的排序優於一般教材。
-  - 引入 **Pre-LLM Gate**：以 Rule-based 邏輯在檢索前攔截超出範圍的問題，成功消除了 Llama-3-8B 等輕量模型「無法拒答」的幻覺。
-- **v3.0 Stateful Multi-Turn**：
-  - 引入 **Query Rewrite** 解決多輪追問的向量空間偏移。
-  - 實作 **State Decoupling**：在對話紀錄中分離「JSON 結構化狀態」與「自然語言摘要」，避免 LLM 在讀取歷史時因 JSON 格式產生注意力渙散 (Attention Dilution)。
----
-
-## 🚀 Quick Start
+Bash equivalents:
 
 ```bash
-# 1. Clone & install dependencies
-git clone https://github.com/YOUR_USERNAME/aml-redflags-rag.git
-cd aml-redflags-rag
-pip install -r requirements.txt
-
-# 2. Place source PDFs in data/
-# data/fatf_tbm_laundering_red_flags.pdf
-# data/fatf_virtual_assets_red_flags.pdf
-# data/tw_aml_training_slides.pdf
-
-# 3. Run indexing pipeline
-python indexing/build_data_v2.py
-
-# 4. Run experiment (Google Colab recommended)
-# Open experiments/experiment_rag_v2.py in Colab
+python -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+cp .env.example .env
+.venv/bin/python -m uvicorn api.main:app --reload
 ```
 
----
+Open `http://localhost:8000/health`. Mock mode is the default and requires no
+API keys.
 
-## 🔮 Roadmap & Limitations / 未來展望與限制
+## Quick Start: Docker Compose
 
-基於實驗結果，後續開發將著重於以下三個層面：
+The Dockerfile and `docker-compose.yml` are provided and were reviewed for
+correctness, but a Docker build and container health check were not run on the
+development machine (Docker was unavailable on the Windows host used for this
+implementation).
 
-1. **檢索路由化 (Intelligent Routing)**：開發 Query-type 分類器，自動判斷該採用 Hybrid 還是純 Dense 檢索，減少雜訊干擾。
-2. **查詢重寫 (Query Rewriting)**：利用 LLM 處理使用者的日常敘事，在檢索前自動補齊遺失的法律術語。
-3. **評估自動化**：將 `scenario_20` 整合進 CI/CD 流程，確保每次調整 Prompt 或 Chunking 時，檢索品質不會退化（Regression Testing）。
+The default image installs the full ML profile and is large. Its build
+downloads the multilingual embedding model so normal startup can be offline.
+
+```powershell
+Copy-Item .env.example .env
+docker compose up --build -d
+Invoke-RestMethod http://localhost:8000/health
+docker compose down
+```
+
+```bash
+cp .env.example .env
+docker compose up --build -d
+curl http://localhost:8000/health
+docker compose down
+```
+
+## API Examples
+
+PowerShell:
+
+```powershell
+$body = @{
+  query = "Funds show rapid movement through a virtual asset exchange."
+  top_k = 5
+  retrieval_mode = "hybrid"
+  llm_mode = "mock"
+  include_debug = $true
+} | ConvertTo-Json
+
+Invoke-RestMethod -Uri http://localhost:8000/query `
+  -Method Post -ContentType "application/json" -Body $body
+
+Invoke-RestMethod http://localhost:8000/sources
+```
+
+Bash:
+
+```bash
+curl -X POST http://localhost:8000/query \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"Funds show rapid movement through a virtual asset exchange.","top_k":5,"retrieval_mode":"hybrid","llm_mode":"mock","include_debug":true}'
+
+curl http://localhost:8000/sources
+```
+
+`POST /query` returns `answer`, `assessment`, `identified_flags`, `citations`,
+`refusal`, and optional `debug`. Gate refusals short-circuit retrieval. Missing
+artifacts leave the service running in degraded mode and make `/query` return a
+clear `503 ARTIFACTS_NOT_FOUND` response.
+
+## Verification
+
+```powershell
+.venv\Scripts\python.exe -m compileall api rag_core indexing tests
+.venv\Scripts\python.exe -m pytest tests -q
+```
+
+For a running native or container service:
+
+```powershell
+.venv\Scripts\python.exe tests\smoke_test.py
+```
+
+Set `SMOKE_BASE_URL` to test a non-default address.
+
+## Artifact Policy and Offline Indexing
+
+The repository commits only:
+
+- `artifacts/index/chunks.json`: 12 small, hand-written demo chunks.
+- `artifacts/index/manifest.json`: demo provenance and source summaries.
+
+It does not include raw PDFs, private data, API keys, `.env`, pickle indexes,
+or large FAISS files. At service startup, BM25 and optional FAISS indexes are
+rebuilt in memory from the committed chunk text.
+
+To build artifacts from operator-supplied private PDFs:
+
+```powershell
+.venv\Scripts\python.exe indexing\build_data_v2.py `
+  --pdf-dir data\private `
+  --out-dir artifacts\index `
+  --version private-build-v1
+```
+
+The script writes service-compatible JSON plus local-only FAISS/BM25 artifacts.
+These generated binary and pickle files are gitignored.
+
+## Notebook Experiment Results
+
+The following are historical **v4 notebook experiment results on a private
+226-chunk corpus**. They are not benchmark claims for the 12-chunk API demo and
+are not re-run by the current test suite.
+
+| Retrieval strategy | P@3 | P@5 | Recall@5 | MRR |
+|---|---:|---:|---:|---:|
+| Dense (FAISS) | 0.267 | 0.180 | 0.825 | 0.670 |
+| BM25 | 0.083 | 0.050 | 0.250 | 0.250 |
+| Hybrid (RRF) | 0.250 | 0.180 | 0.825 | 0.649 |
+
+The notebook research found that multilingual dense retrieval dominated BM25
+for cross-language queries, while RRF could inherit systematic BM25 noise.
+Later notebook versions explored query rewriting, state decoupling, and intent
+routing to reduce multi-turn false positives. Those experiments remain
+available in the display notebooks but are not part of the service API.
+
+## Evaluation Evidence Chain
+
+The following artifacts make the historical benchmark traceable. They record
+results from the private 226-chunk corpus and are **not** reproducible against
+the 12-chunk demo corpus committed to this repository. Raw PDFs, binary FAISS
+indexes, BM25 pickles, and the full private corpus text are intentionally not
+committed.
+
+| Artifact | Path | Contents |
+|---|---|---|
+| Annotated test set | `eval/queries/scenario_20_annotated.json` | 20 bilingual AML queries with chunk-level ground-truth relevance annotations |
+| Benchmark results | `eval/results/retrieval_scenario20_results.json` | Per-query P@3 / P@5 / Recall@5 / MRR for dense, BM25, and hybrid; source of the table above |
+| Cross-language baseline | `eval/results/retrieval_basic2_v1.json` | 2-query sanity check; shows BM25 Recall@5 = 0.000 on Chinese queries against English corpus |
+| Corpus provenance | `eval/provenance/corpus_index_v2_metadata.json` | Embedding model, chunk size, vector dimension, and total chunk count for the private corpus |
+
+Narrative explanation of the benchmark design, query categories, and
+retrieval failure modes is in [`docs/evaluation_notes.md`](docs/evaluation_notes.md).
+
+## Repository Guide
+
+```text
+api/                    FastAPI application
+rag_core/               config, schemas, loader, retrieval, gate, generation, pipeline
+indexing/               offline private-PDF artifact builder
+artifacts/index/         committed sample chunks and manifest
+tests/                  API contract tests and HTTP smoke test
+docs/                   demo contract, migration notes, implementation plan
+notebooks_archive/       committed notebook migration sources
+*_display.ipynb          curated research notebooks; intentionally preserved
+```
+
+## Known Limitations
+
+- The committed corpus is intentionally tiny and cannot represent production
+  AML coverage.
+- Mock generation never emits `confirmed`; it returns `possible`, `unlikely`,
+  or `refuse`.
+- Dense startup needs the model in cache or network access. If unavailable,
+  the service degrades to BM25 and reports why.
+- Live Groq/Gemini paths are not verified without operator-provided keys.
+- The semantic gate threshold is experimental and disabled by default.
+- Multi-turn state, intent routing, ingestion APIs, databases, and evaluation
+  endpoints are not implemented in the service.
+
+## Roadmap
+
+- Add a public, licensed evaluation corpus and repeatable retrieval benchmark.
+- Add regression tests for dense and live-provider paths.
+- Expose operator-controlled ingestion and index versioning.
+- Port multi-turn intent routing only after defining a stable API contract.

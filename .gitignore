@@ -1,0 +1,38 @@
+# secrets
+.env
+*.key
+*.pem
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.claude/
+.ipynb_checkpoints/
+
+# local migration scratch space
+migration_staging/
+
+# raw/private data
+data/raw/
+data/private/
+*.pdf
+
+# temporary outputs
+*.log
+tmp/
+outputs/
+
+# large/generated retrieval artifacts
+artifacts/index/*
+!artifacts/index/.gitkeep
+# small hand-written demo sample artifacts are intentionally committed
+!artifacts/index/chunks.json
+!artifacts/index/manifest.json
+*.faiss
+faiss_index.bin
+*.pkl
+*.pickle
+
+# local virtualenv
+.venv/

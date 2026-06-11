@@ -1,0 +1,14 @@
+# Full demo profile (default; used by the Dockerfile).
+# Dense retrieval (FAISS + sentence-transformers) and RRF hybrid work out of the box.
+# For a smaller install without the dense backend, use requirements-lite.txt.
+fastapi
+uvicorn[standard]
+pydantic>=2
+pydantic-settings
+httpx
+pytest
+rank_bm25
+jieba
+sentence-transformers
+faiss-cpu
+pypdf

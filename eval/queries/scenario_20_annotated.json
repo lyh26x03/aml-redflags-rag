@@ -1,0 +1,245 @@
+[
+  {
+    "query_id": "S01",
+    "query": "一家汽車經銷商卻持續出口大量紡織品到海外，這種買賣項目和公司登記業務完全對不上的情況，是否值得關注？",
+    "category": "場景描述",
+    "relevant_chunks": [
+      "fatf_tbm_laundering_red_flags.pdf_p6_c0"
+    ],
+    "expected_document": "fatf_tbm_laundering_red_flags.pdf",
+    "lexical_overlap_risk": "high",
+    "semantic_distance_level": 1,
+    "semantic_shift_note": null
+  },
+  {
+    "query_id": "S02",
+    "query": "某間公司的組織架構異常複雜，中間層層疊了好幾家在監管寬鬆地區註冊的空殼法人，而且看不出實際業務邏輯，這種組織設計有什麼問題？",
+    "category": "場景描述",
+    "relevant_chunks": [
+      "fatf_tbm_laundering_red_flags.pdf_p5_c0"
+    ],
+    "expected_document": "fatf_tbm_laundering_red_flags.pdf",
+    "lexical_overlap_risk": "high",
+    "semantic_distance_level": 1,
+    "semantic_shift_note": null
+  },
+  {
+    "query_id": "S03",
+    "query": "賣方開出來的帳單上寫的錢和雙方本來談好的價錢差了一大截，連運過來的東西數量和品質也跟紙上寫的對不上，這種帳面和實物兜不攏的狀況，算是什麼問題？",
+    "category": "去關鍵字/語義轉換",
+    "relevant_chunks": [
+      "fatf_tbm_laundering_red_flags.pdf_p7_c1"
+    ],
+    "expected_document": "fatf_tbm_laundering_red_flags.pdf",
+    "lexical_overlap_risk": "medium",
+    "semantic_distance_level": 2,
+    "semantic_shift_note": "移除「發票」「合約」「進出口」「貨物」等詞。核心：文件與交付不一致。"
+  },
+  {
+    "query_id": "S04",
+    "query": "某貿易商的帳戶看起來只是資金的中繼站——每天進來大量匯款、快速轉走，日終餘額幾乎為零，而且找不到合理的商業解釋，這類帳戶有什麼特徵？",
+    "category": "場景描述",
+    "relevant_chunks": [
+      "fatf_tbm_laundering_red_flags.pdf_p8_c1"
+    ],
+    "expected_document": "fatf_tbm_laundering_red_flags.pdf",
+    "lexical_overlap_risk": "high",
+    "semantic_distance_level": 1,
+    "semantic_shift_note": null
+  },
+  {
+    "query_id": "S05",
+    "query": "某企業進口貨物的金額，和它對外匯出用於支付進口的銀行轉帳金額有很大落差，這種數字上的不一致意味著什麼？",
+    "category": "場景描述",
+    "relevant_chunks": [
+      "fatf_tbm_laundering_red_flags.pdf_p7_c4"
+    ],
+    "expected_document": "fatf_tbm_laundering_red_flags.pdf",
+    "lexical_overlap_risk": "high",
+    "semantic_distance_level": 1,
+    "semantic_shift_note": null
+  },
+  {
+    "query_id": "S06",
+    "query": "一家公司的註冊地址是一棟住宅大樓的信箱地址，而且沒有標明具體的單位號碼，也沒有任何商業或工業空間，這樣的登記地點為什麼引人懷疑？",
+    "category": "場景描述",
+    "relevant_chunks": [
+      "fatf_tbm_laundering_red_flags.pdf_p5_c1"
+    ],
+    "expected_document": "fatf_tbm_laundering_red_flags.pdf",
+    "lexical_overlap_risk": "high",
+    "semantic_distance_level": 1,
+    "semantic_shift_note": null
+  },
+  {
+    "query_id": "S07",
+    "query": "一段已經確認的約定，在即將兌現的節點上被替換成一個陌生的版本——這種「最後一刻的替換」在交易情境中，通常暗示了什麼？",
+    "category": "去關鍵字/語義轉換",
+    "relevant_chunks": [
+      "fatf_tbm_laundering_red_flags.pdf_p8_c0"
+    ],
+    "expected_document": "fatf_tbm_laundering_red_flags.pdf",
+    "lexical_overlap_risk": "low",
+    "semantic_distance_level": 3,
+    "semantic_shift_note": "將「付款流程被篡改」抽象化為「約定在節點被替換」，去金融術語。"
+  },
+  {
+    "query_id": "S08",
+    "query": "某人在數位貨幣交易平台開戶時存入了一大筆資金，金額與其個人背景和職業收入完全不相稱，而且第一天就開始大量進出交易，這種新用戶行為有什麼可疑之處？",
+    "category": "場景描述",
+    "relevant_chunks": [
+      "fatf_virtual_assets_red_flags.pdf_p16_c3"
+    ],
+    "expected_document": "fatf_virtual_assets_red_flags.pdf",
+    "lexical_overlap_risk": "high",
+    "semantic_distance_level": 1,
+    "semantic_shift_note": null
+  },
+  {
+    "query_id": "S09",
+    "query": "某人把一件有完整公開來歷的東西，換成一件來歷在結構上就無從查證的東西——這個轉換行為，本身說明了什麼？",
+    "category": "去關鍵字/語義轉換",
+    "relevant_chunks": [
+      "fatf_virtual_assets_red_flags.pdf_p11_c6",
+      "tw_aml_training_slides.pdf_p3_c0"
+    ],
+    "expected_document": "fatf_virtual_assets_red_flags.pdf",
+    "lexical_overlap_risk": "low",
+    "semantic_distance_level": 3,
+    "semantic_shift_note": "保留「可追溯→不可追溯」結構，改為抽象物件隱喻。"
+  },
+  {
+    "query_id": "S10",
+    "query": "有人透過暗網關聯的 IP 位址或加密通訊工具登入數位資產服務平台進行交易，這種連線方式為什麼會被視為異常？",
+    "category": "場景描述",
+    "relevant_chunks": [
+      "fatf_virtual_assets_red_flags.pdf_p12_c3"
+    ],
+    "expected_document": "fatf_virtual_assets_red_flags.pdf",
+    "lexical_overlap_risk": "high",
+    "semantic_distance_level": 1,
+    "semantic_shift_note": null
+  },
+  {
+    "query_id": "S11",
+    "query": "客戶的資金來源直接關聯到已知的網路勒索事件地址，或是來自地下交易市場的錢包，這種資金流向為什麼需要特別警覺？",
+    "category": "場景描述",
+    "relevant_chunks": [
+      "fatf_virtual_assets_red_flags.pdf__p17_c4",
+      "fatf_virtual_assets_red_flags.pdf_p19_c5"
+    ],
+    "expected_document": "fatf_virtual_assets_red_flags.pdf",
+    "lexical_overlap_risk": "high",
+    "semantic_distance_level": 1,
+    "semantic_shift_note": null
+  },
+  {
+    "query_id": "S12",
+    "query": "一位用戶註冊數位資產帳號時提交了經過修改的身分證照片，而且在被要求補充資金來源說明時拒絕回答，這在開戶審查階段代表什麼？",
+    "category": "場景描述",
+    "relevant_chunks": [
+      "fatf_virtual_assets_red_flags.pdf_p14_c7",
+      "fatf_virtual_assets_red_flags.pdf_p14_c8"
+    ],
+    "expected_document": "fatf_virtual_assets_red_flags.pdf",
+    "lexical_overlap_risk": "high",
+    "semantic_distance_level": 1,
+    "semantic_shift_note": null
+  },
+  {
+    "query_id": "S13",
+    "query": "某客戶習慣把資金匯到一個對數位資產完全沒有監管規範的國家的交易平台，而且那個平台也沒有落實任何身分驗證措施，這和地理風險有什麼關係？",
+    "category": "場景描述",
+    "relevant_chunks": [
+      "fatf_virtual_assets_red_flags.pdf_p19_c6"
+    ],
+    "expected_document": "fatf_virtual_assets_red_flags.pdf",
+    "lexical_overlap_risk": "high",
+    "semantic_distance_level": 1,
+    "semantic_shift_note": null
+  },
+  {
+    "query_id": "S14",
+    "query": "某平台發現有大量看似互不相關的數位錢包，其實全部是從同一個網路位址操控的，這可能代表什麼手法？",
+    "category": "場景描述",
+    "relevant_chunks": [
+      "fatf_virtual_assets_red_flags.pdf_p12_c4"
+    ],
+    "expected_document": "fatf_virtual_assets_red_flags.pdf",
+    "lexical_overlap_risk": "high",
+    "semantic_distance_level": 1,
+    "semantic_shift_note": null
+  },
+  {
+    "query_id": "S15",
+    "query": "有人先把一批說不清楚哪裡來的財物，委託多人分批代為處理，途中幾度易手，最後以置產或添購名貴物件的方式讓那筆財物看起來出自正當來源——請問法規上用什麼框架來描述這整個過程？",
+    "category": "去關鍵字/語義轉換",
+    "relevant_chunks": [
+      "tw_aml_training_slides.pdf_p2_c0"
+    ],
+    "expected_document": "tw_aml_training_slides.pdf",
+    "lexical_overlap_risk": "medium",
+    "semantic_distance_level": 2,
+    "semantic_shift_note": "轉為記者敘事視角；全面換詞（財物、易手、正當來源），保留洗錢三階段結構。"
+  },
+  {
+    "query_id": "S16",
+    "query": "銀行在什麼情況下會直接拒絕讓客戶開戶或進行交易？例如發現客戶疑似使用假名或者拿偽造的證件來辦理，還有哪些類似的拒絕情形？",
+    "category": "場景描述",
+    "relevant_chunks": [
+      "tw_aml_training_slides.pdf_p6_c0"
+    ],
+    "expected_document": "tw_aml_training_slides.pdf",
+    "lexical_overlap_risk": "high",
+    "semantic_distance_level": 1,
+    "semantic_shift_note": null
+  },
+  {
+    "query_id": "S17",
+    "query": "如果有人在報紙上看到「高價收購銀行帳戶」的廣告，把自己的金融卡和存摺交給對方，即使只是為了賺取小利，這樣做在法律上會面臨什麼後果？",
+    "category": "場景描述",
+    "relevant_chunks": [
+      "tw_aml_training_slides.pdf_p9_c0"
+    ],
+    "expected_document": "tw_aml_training_slides.pdf",
+    "lexical_overlap_risk": "high",
+    "semantic_distance_level": 1,
+    "semantic_shift_note": null
+  },
+  {
+    "query_id": "S18",
+    "query": "主管交代員工把一大筆來路不明的現金拆成好幾份、每份都控制在法定申報金額以下分批存入銀行，這樣刻意規避通報機制的行為會觸犯什麼罪？",
+    "category": "場景描述",
+    "relevant_chunks": [
+      "tw_aml_training_slides.pdf_p8_c0"
+    ],
+    "expected_document": "tw_aml_training_slides.pdf",
+    "lexical_overlap_risk": "high",
+    "semantic_distance_level": 1,
+    "semantic_shift_note": null
+  },
+  {
+    "query_id": "S19",
+    "query": "出國旅遊時，除了各國貨幣現鈔和黃金之外，還有哪些可能被利用於資金非法移動的物品也需要在邊境向海關申報？如果沒有誠實申報會怎樣？",
+    "category": "場景描述",
+    "relevant_chunks": [
+      "tw_aml_training_slides.pdf_p7_c0"
+    ],
+    "expected_document": "tw_aml_training_slides.pdf",
+    "lexical_overlap_risk": "high",
+    "semantic_distance_level": 1,
+    "semantic_shift_note": null
+  },
+  {
+    "query_id": "S20",
+    "query": "要在銀行以公司名義開戶時，除了營業登記等基本文件之外，銀行還會要求提供哪些關於公司背後實際控制人的身分資訊？",
+    "category": "場景描述",
+    "relevant_chunks": [
+      "tw_aml_training_slides.pdf_p5_c0"
+    ],
+    "expected_document": "tw_aml_training_slides.pdf",
+    "lexical_overlap_risk": "high",
+    "semantic_distance_level": 1,
+    "semantic_shift_note": null
+  }
+]

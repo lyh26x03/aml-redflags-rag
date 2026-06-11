@@ -1,0 +1,296 @@
+{
+  "experiment": "retrieval_only_eval_v1",
+  "date": "2026-02-24T07:05:36.209803",
+  "num_queries": 2,
+  "config": {
+    "embedding_model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+    "chunk_size": 400,
+    "total_chunks": 226,
+    "rrf_k": 60,
+    "priority_weighting": true
+  },
+  "results": {
+    "dense": {
+      "search_method": "dense",
+      "num_queries": 2,
+      "aggregate": {
+        "mean_precision@3": 0.3333333333333333,
+        "mean_precision@5": 0.2,
+        "mean_recall@5": 1.0,
+        "mean_mrr": 0.41666666666666663
+      },
+      "per_query": [
+        {
+          "query_id": "B01",
+          "query": "FATF 的全稱是什麼？",
+          "category": "精確名詞",
+          "retrieved": [
+            "fatf_virtual_assets_red_flags.pdf_p2_c0",
+            "fatf_tbm_laundering_red_flags.pdf_p2_c0",
+            "fatf_virtual_assets_red_flags.pdf_p2_c1",
+            "fatf_tbm_laundering_red_flags.pdf_p2_c1",
+            "fatf_virtual_assets_red_flags.pdf_p24_c1"
+          ],
+          "relevant": [
+            "fatf_tbm_laundering_red_flags.pdf_p2_c0"
+          ],
+          "precision@3": 0.3333333333333333,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 0.5,
+          "raw_scores": [
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p2_c0",
+              "score": 0.6056073904037476
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p2_c0",
+              "score": 0.6056073904037476
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p2_c1",
+              "score": 0.5100778341293335
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p2_c1",
+              "score": 0.4979286193847656
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p24_c1",
+              "score": 0.4395802319049835
+            }
+          ]
+        },
+        {
+          "query_id": "B02",
+          "query": "什麼是 Trade-Based Money Laundering？",
+          "category": "精確名詞",
+          "retrieved": [
+            "fatf_tbm_laundering_red_flags.pdf_p3_c5",
+            "fatf_tbm_laundering_red_flags.pdf_p10_c1",
+            "fatf_tbm_laundering_red_flags.pdf_p1_c0",
+            "fatf_virtual_assets_red_flags.pdf_p14_c1",
+            "fatf_tbm_laundering_red_flags.pdf_p3_c0"
+          ],
+          "relevant": [
+            "fatf_tbm_laundering_red_flags.pdf_p1_c0"
+          ],
+          "precision@3": 0.3333333333333333,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 0.3333333333333333,
+          "raw_scores": [
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p3_c5",
+              "score": 0.7410616874694824
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p10_c1",
+              "score": 0.7359757423400879
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p1_c0",
+              "score": 0.6757577061653137
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p14_c1",
+              "score": 0.6602547764778137
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p3_c0",
+              "score": 0.6390748023986816
+            }
+          ]
+        }
+      ]
+    },
+    "bm25": {
+      "search_method": "bm25",
+      "num_queries": 2,
+      "aggregate": {
+        "mean_precision@3": 0.0,
+        "mean_precision@5": 0.0,
+        "mean_recall@5": 0.0,
+        "mean_mrr": 0.0
+      },
+      "per_query": [
+        {
+          "query_id": "B01",
+          "query": "FATF 的全稱是什麼？",
+          "category": "精確名詞",
+          "retrieved": [
+            "tw_aml_training_slides.pdf_p4_c0",
+            "tw_aml_training_slides.pdf_p7_c0",
+            "tw_aml_training_slides.pdf_p2_c0",
+            "tw_aml_training_slides.pdf_p10_c0",
+            "tw_aml_training_slides.pdf_p5_c0"
+          ],
+          "relevant": [
+            "fatf_tbm_laundering_red_flags.pdf_p2_c0"
+          ],
+          "precision@3": 0.0,
+          "precision@5": 0.0,
+          "recall@5": 0.0,
+          "mrr": 0.0,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p4_c0",
+              "score": 11.616453025345663
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p7_c0",
+              "score": 11.57691480391733
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p2_c0",
+              "score": 10.577225948157663
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p10_c0",
+              "score": 9.245447198338068
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p5_c0",
+              "score": 9.027016045178549
+            }
+          ]
+        },
+        {
+          "query_id": "B02",
+          "query": "什麼是 Trade-Based Money Laundering？",
+          "category": "精確名詞",
+          "retrieved": [
+            "tw_aml_training_slides.pdf_p10_c0",
+            "tw_aml_training_slides.pdf_p2_c0",
+            "tw_aml_training_slides.pdf_p4_c0",
+            "tw_aml_training_slides.pdf_p1_c0",
+            "tw_aml_training_slides.pdf_p7_c0"
+          ],
+          "relevant": [
+            "fatf_tbm_laundering_red_flags.pdf_p1_c0"
+          ],
+          "precision@3": 0.0,
+          "precision@5": 0.0,
+          "recall@5": 0.0,
+          "mrr": 0.0,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p10_c0",
+              "score": 24.628545251812533
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p2_c0",
+              "score": 13.230998651010934
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p4_c0",
+              "score": 11.830912842133788
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p1_c0",
+              "score": 11.658103000763555
+            },
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p7_c0",
+              "score": 11.265243373945216
+            }
+          ]
+        }
+      ]
+    },
+    "hybrid": {
+      "search_method": "hybrid_rrf",
+      "num_queries": 2,
+      "aggregate": {
+        "mean_precision@3": 0.16666666666666666,
+        "mean_precision@5": 0.2,
+        "mean_recall@5": 1.0,
+        "mean_mrr": 0.625
+      },
+      "per_query": [
+        {
+          "query_id": "B01",
+          "query": "FATF 的全稱是什麼？",
+          "category": "精確名詞",
+          "retrieved": [
+            "fatf_tbm_laundering_red_flags.pdf_p2_c0",
+            "fatf_tbm_laundering_red_flags.pdf_p2_c1",
+            "fatf_virtual_assets_red_flags.pdf_p2_c0",
+            "fatf_tbm_laundering_red_flags.pdf_p3_c4",
+            "fatf_virtual_assets_red_flags.pdf_p2_c1"
+          ],
+          "relevant": [
+            "fatf_tbm_laundering_red_flags.pdf_p2_c0"
+          ],
+          "precision@3": 0.3333333333333333,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 1.0,
+          "raw_scores": [
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p2_c0",
+              "score": 0.016129032258064516
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p2_c1",
+              "score": 0.015625
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p2_c0",
+              "score": 0.014754098360655738
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p3_c4",
+              "score": 0.014492753623188406
+            },
+            {
+              "chunk_id": "fatf_virtual_assets_red_flags.pdf_p2_c1",
+              "score": 0.014285714285714285
+            }
+          ]
+        },
+        {
+          "query_id": "B02",
+          "query": "什麼是 Trade-Based Money Laundering？",
+          "category": "精確名詞",
+          "retrieved": [
+            "tw_aml_training_slides.pdf_p2_c0",
+            "fatf_tbm_laundering_red_flags.pdf_p3_c5",
+            "fatf_tbm_laundering_red_flags.pdf_p10_c1",
+            "fatf_tbm_laundering_red_flags.pdf_p1_c0",
+            "fatf_tbm_laundering_red_flags.pdf_p3_c0"
+          ],
+          "relevant": [
+            "fatf_tbm_laundering_red_flags.pdf_p1_c0"
+          ],
+          "precision@3": 0.0,
+          "precision@5": 0.2,
+          "recall@5": 1.0,
+          "mrr": 0.25,
+          "raw_scores": [
+            {
+              "chunk_id": "tw_aml_training_slides.pdf_p2_c0",
+              "score": 0.02449742870500234
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p3_c5",
+              "score": 0.01639344262295082
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p10_c1",
+              "score": 0.016129032258064516
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p1_c0",
+              "score": 0.015873015873015872
+            },
+            {
+              "chunk_id": "fatf_tbm_laundering_red_flags.pdf_p3_c0",
+              "score": 0.015384615384615385
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

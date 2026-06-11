@@ -1,0 +1,35 @@
+{
+  "version": "demo-sample-v1",
+  "artifact_type": "sample",
+  "created_at": "2026-06-11T00:00:00Z",
+  "description": "Small hand-written sample artifacts for local API smoke testing. These are simplified demo statements, NOT the full AML corpus and NOT FATF source text. Full artifacts can be rebuilt with indexing/build_data_v2.py from the original (private) PDFs.",
+  "config": {
+    "embedding_model": null,
+    "chunk_size": 400,
+    "chunk_overlap": 80
+  },
+  "stats": {
+    "total_chunks": 12,
+    "vector_dimension": null
+  },
+  "sources": [
+    {
+      "source_name": "Demo Core Red Flag Indicators (EN)",
+      "language": "en",
+      "layer": "core",
+      "chunk_count": 5
+    },
+    {
+      "source_name": "Demo Virtual Asset Red Flags (ZH)",
+      "language": "zh",
+      "layer": "sector_specific",
+      "chunk_count": 4
+    },
+    {
+      "source_name": "Demo AML Training Notes (ZH)",
+      "language": "zh",
+      "layer": "knowledge_bridge",
+      "chunk_count": 3
+    }
+  ]
+}
