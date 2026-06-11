@@ -82,6 +82,11 @@ API keys.
 
 ## Quick Start: Docker Compose
 
+The Dockerfile and `docker-compose.yml` are provided and were reviewed for
+correctness, but a Docker build and container health check were not run on the
+development machine (Docker was unavailable on the Windows host used for this
+implementation).
+
 The default image installs the full ML profile and is large. Its build
 downloads the multilingual embedding model so normal startup can be offline.
 

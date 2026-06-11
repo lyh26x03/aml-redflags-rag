@@ -1,8 +1,18 @@
 """Evidence-bound generation for the AML red-flag demo.
 
-Mock mode is deterministic and never calls the network. Optional Groq and
-Gemini calls use plain HTTP and fall back to mock output on missing keys,
-provider errors, or malformed responses.
+Mock mode is deterministic and never calls the network.
+
+Live Groq / Gemini paths:
+  - Key-gated: if GROQ_API_KEY or GEMINI_API_KEY is absent the call is skipped
+    and mock output is returned with fallback_used=True in the debug block.
+  - Not execution-verified: live providers were not called during development
+    (no API keys available in that environment).
+  - Output constraint: ``_normalize_live_result`` intersects the live LLM's
+    identified flags with those that mock (keyword-based) evidence supports.
+    This prevents hallucinated citations but can also drop valid flags the LLM
+    identifies through reasoning that the keyword detector misses.
+  - Any provider error, timeout, or malformed JSON falls back to mock with an
+    explicit fallback_reason in the debug block.
 """
 
 import json
@@ -34,10 +44,37 @@ TOPIC_TO_FLAGS: Dict[str, Set[str]] = {
     "shell_company": {"RF-08"},
 }
 
-SYSTEM_PROMPT = """You are an AML red-flag analysis assistant.
-Use only the supplied evidence. Return JSON with answer, assessment, and
-identified_flags. Assessment must be possible, unlikely, or refuse. Never
-claim a red flag is confirmed and never invent citations or source facts."""
+SYSTEM_PROMPT = """\
+You are an AML (anti-money-laundering) red-flag analysis assistant.
+
+# Red-flag catalog
+RF-01 Structuring — deposits/withdrawals split to avoid reporting thresholds
+RF-02 Rapid Movement — funds transit quickly through accounts with little retention
+RF-03 Unusual Cash Activity — cash volumes inconsistent with the customer profile
+RF-04 Third-Party Control — account operated or opened by an unrelated third party
+RF-05 High-Risk Cross-Border Activity — transfers to/from high-risk jurisdictions
+RF-06 Profile Mismatch — transaction pattern inconsistent with stated occupation/business
+RF-07 Virtual Asset Anonymity — mixing services, non-custodial wallets, or privacy coins
+RF-08 Opaque Ownership — shell companies or structures where beneficial owner is unclear
+
+# Task
+Analyse the provided scenario using ONLY the retrieved evidence chunks below.
+Identify which red flags (if any) the evidence supports.
+
+# Output contract
+Return a single JSON object with exactly these keys:
+  "answer"           — 1–3 sentence plain-language summary (English or Chinese)
+  "assessment"       — one of: "possible", "unlikely", "refuse"
+  "identified_flags" — array of objects: {code, name, reason}
+  "citations"        — array of objects: {chunk_id, source, excerpt}
+
+# Hard rules
+- Assessment MUST be "possible", "unlikely", or "refuse". Never "confirmed".
+- Cite only chunk_id values that appear in the supplied evidence.
+- If evidence is insufficient, return "unlikely" with an empty flags array.
+- If the scenario is outside AML scope, return "refuse" and explain in "answer".
+- Never invent facts, sources, or citations not present in the evidence.\
+"""
 
 
 def build_user_prompt(query: str, chunks: List[Dict[str, Any]]) -> str:

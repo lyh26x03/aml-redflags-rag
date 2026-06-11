@@ -37,6 +37,11 @@ def test_health_and_sources():
 
 
 def test_query_happy_path_and_fallback_labeling():
+    # The query contains "rapid movement" (→ RF-02) and "virtual asset exchange"
+    # (→ RF-07).  The sample corpus in artifacts/index/chunks.json includes chunks
+    # tagged with both RF-02 and RF-07, so mock_generate produces "possible".
+    # If the sample corpus is rebuilt without those flags, this assertion will need
+    # updating.
     with _client() as client:
         response = client.post(
             "/query",
@@ -92,6 +97,18 @@ def test_debug_can_be_omitted():
         )
         assert response.status_code == 200
         assert response.json()["debug"] is None
+
+
+def test_include_debug_defaults_to_true_when_setting_enabled():
+    # include_debug omitted from request; with enable_debug=True in settings,
+    # pipeline includes debug because `None is not False` evaluates True.
+    with _client() as client:
+        response = client.post(
+            "/query",
+            json={"query": "rapid movement of funds"},
+        )
+        assert response.status_code == 200
+        assert response.json()["debug"] is not None
 
 
 def test_missing_artifacts_degrade_without_crashing(tmp_path):
