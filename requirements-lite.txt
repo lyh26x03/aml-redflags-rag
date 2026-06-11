@@ -1,0 +1,11 @@
+# Lightweight fallback profile (no dense backend).
+# The service runs BM25-only retrieval and labels the degradation honestly
+# in debug output (fallback_used=true, fallback_reason).
+fastapi
+uvicorn[standard]
+pydantic>=2
+pydantic-settings
+httpx
+pytest
+rank_bm25
+jieba
