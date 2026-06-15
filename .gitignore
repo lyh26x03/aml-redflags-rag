@@ -22,6 +22,7 @@ data/private/
 *.log
 tmp/
 outputs/
+eval/results/*_latest.jsonl
 
 # large/generated retrieval artifacts
 artifacts/index/*
