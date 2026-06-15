@@ -171,6 +171,23 @@ The evaluator also writes a human-readable runtime report to
 See [`docs/cqc_rag_lite_notes.md`](docs/cqc_rag_lite_notes.md) for the
 engineering scope, interpretation guidance, and explicit non-goals.
 
+## Failure Diagnostics Lite
+
+Failure Diagnostics Lite reads generated API smoke and CQC-RAG Lite JSONL
+outputs and turns observable issues into reviewer-facing categories such as
+retrieval fallback, citation instability, retrieved-chunk instability,
+identified-flag instability, refusal instability, and API smoke failures.
+
+```powershell
+.venv\Scripts\python.exe scripts\run_failure_diagnostics.py
+```
+
+The local report is written to
+`eval/reports/failure_diagnostics_latest.md`. This is diagnostic and
+observability tooling: it does not change the RAG pipeline and does not claim
+AML correctness or model quality. See
+[`docs/failure_diagnostics_lite.md`](docs/failure_diagnostics_lite.md).
+
 ## Reviewer Demo Pack
 
 The reviewer pack runs the repository's static checks and, when the FastAPI
