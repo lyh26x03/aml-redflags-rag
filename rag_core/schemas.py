@@ -10,7 +10,7 @@ from typing import List, Literal, Optional
 from pydantic import BaseModel, Field
 
 RetrievalMode = Literal["hybrid", "dense", "bm25"]
-LlmMode = Literal["mock", "gemini", "groq"]
+LlmMode = Literal["mock", "gemini", "gemma", "groq"]
 Assessment = Literal["confirmed", "possible", "unlikely", "refuse"]
 GateDecisionLiteral = Literal["allow", "refuse"]
 

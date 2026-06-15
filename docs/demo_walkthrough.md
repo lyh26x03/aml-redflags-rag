@@ -176,15 +176,12 @@ harness, not as a reproduction of the full research method.
 
 1. CQC report closure: completed.
 2. Failure Diagnostics Lite: completed.
-3. Gemma refactor.
+3. Gemma via Google AI Studio optional live path: completed.
 4. Intent routing.
 5. Multi-turn conversation.
 
-The next valuable engineering layer is Failure Diagnostics: classify and
-report failure modes such as retrieval fallback, evidence instability,
-citation drift, flag instability, low source overlap, and out-of-scope or
-refusal behavior. This turns evaluation failures into actionable debugging
-signals before expanding the model or conversation surface.
+The next roadmap item is intent routing. The optional Gemma live path uses the
+Google Generative Language API and remains outside the keyless reviewer path.
 
 ## 10. Five-Minute Spoken Script
 
@@ -242,8 +239,6 @@ a model-quality benchmark. The reviewer pack combines the key local checks into
 a readable report without replacing the underlying tests.
 
 The project is deliberately scoped. It is not legal advice, a production AML
-platform, or a multi-turn service. The next engineering step is Failure
-Diagnostics: turning retrieval fallback, citation drift, flag instability, and
-low evidence overlap into clear failure categories. After that, the roadmap
-moves through a Gemma refactor, intent routing, and then multi-turn
-conversation.
+platform, or a multi-turn service. Failure Diagnostics Lite and the optional
+Gemma-via-Google-AI-Studio live path are now implemented. The roadmap continues
+with intent routing and then multi-turn conversation.

@@ -33,6 +33,8 @@ Invoke-RestMethod http://localhost:8000/health
 
 The full profile in `requirements.txt` enables optional dense retrieval when its
 embedding model is available. The lite profile runs with honest BM25 fallback.
+Optional live Gemma mode uses Google AI Studio through `GEMINI_API_KEY`, but it
+is not required for this 10-minute reviewer path or any automated test.
 
 ## Suggested Reviewer Path
 
@@ -74,5 +76,7 @@ embedding model is available. The lite profile runs with honest BM25 fallback.
 - It is not a full CQC-RAG implementation or a model-quality benchmark.
 - It does not release the full private 226-chunk corpus.
 - It does not provide a multi-turn service API.
+- Optional live Gemma mode requires an operator-provided Google AI Studio key
+  and an available model ID; the keyless reviewer path remains the baseline.
 - Docker configuration is included, but Docker has not been verified on the
   documented Windows development host.

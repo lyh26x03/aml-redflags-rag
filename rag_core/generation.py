@@ -2,7 +2,7 @@
 
 Mock mode is deterministic and never calls the network.
 
-Live Groq / Gemini paths:
+Live Groq / Google generateContent paths:
   - Key-gated: if GROQ_API_KEY or GEMINI_API_KEY is absent the call is skipped
     and mock output is returned with fallback_used=True in the debug block.
   - Not execution-verified: live providers were not called during development
@@ -217,7 +217,7 @@ def _call_groq(
     return json.loads(response.json()["choices"][0]["message"]["content"])
 
 
-def _call_gemini(
+def _call_google_generate_content(
     system_prompt: str,
     user_prompt: str,
     model_name: str,
@@ -256,13 +256,15 @@ def call_llm(
     provider = llm_config.get("provider", "")
     model_name = llm_config.get("llm_model_name", "")
     api_key = llm_config.get("api_key", "")
+    if provider not in {"groq", "gemini", "gemma"}:
+        raise ValueError(f"Unsupported LLM provider: {provider}")
     if not api_key:
         raise ValueError(f"{provider or 'LLM'} API key is missing")
     if provider == "groq":
         return _call_groq(system_prompt, user_prompt, model_name, api_key, timeout)
-    if provider == "gemini":
-        return _call_gemini(system_prompt, user_prompt, model_name, api_key, timeout)
-    raise ValueError(f"Unsupported LLM provider: {provider}")
+    return _call_google_generate_content(
+        system_prompt, user_prompt, model_name, api_key, timeout
+    )
 
 
 def _normalize_live_result(
@@ -326,8 +328,24 @@ def generate(
             },
         }
 
-    api_key = gemini_api_key if llm_mode == "gemini" else groq_api_key
+    api_key = gemini_api_key if llm_mode in {"gemini", "gemma"} else groq_api_key
     provider_model = model_name
+    if llm_mode == "gemma" and (
+        not provider_model or provider_model == "mock-local"
+    ):
+        return {
+            **mock,
+            "_generation_debug": {
+                "requested_llm_mode": llm_mode,
+                "effective_llm_mode": "mock",
+                "fallback_used": True,
+                "fallback_reason": (
+                    "MODEL_NAME must be set to an available Gemma model ID for "
+                    "llm_mode=gemma. Check Google AI Studio / Gemini API model "
+                    "availability."
+                ),
+            },
+        }
     if not provider_model or provider_model == "mock-local":
         provider_model = (
             "gemini-2.0-flash" if llm_mode == "gemini"
