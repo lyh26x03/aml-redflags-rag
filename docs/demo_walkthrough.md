@@ -72,6 +72,7 @@ Invoke-RestMethod -Uri http://localhost:8000/query `
 
 .venv\Scripts\python.exe scripts\run_api_smoke_eval.py
 .venv\Scripts\python.exe scripts\run_cqc_eval.py --report-md eval\reports\cqc_latest.md
+.venv\Scripts\python.exe scripts\run_failure_diagnostics.py
 .venv\Scripts\python.exe scripts\run_reviewer_pack.py
 ```
 
@@ -118,6 +119,12 @@ benchmark.
 The reviewer pack is a local convenience runner that records static validation
 and optional live evaluations in a Markdown report. It helps review the
 repository but does not replace the underlying tests or evaluators.
+
+### F. Failure Diagnostics Lite
+
+Failure Diagnostics Lite reads existing API smoke and CQC-RAG Lite outputs and
+classifies observable failure signals for review. It is diagnostic tooling,
+not a benchmark or a change to the RAG pipeline.
 
 ## 6. What Changed From Notebook To Service
 
@@ -167,8 +174,8 @@ harness, not as a reproduction of the full research method.
 
 ## 9. Next Roadmap
 
-1. CQC report closure: completed / closing.
-2. Failure Diagnostics: next.
+1. CQC report closure: completed.
+2. Failure Diagnostics Lite: completed.
 3. Gemma refactor.
 4. Intent routing.
 5. Multi-turn conversation.

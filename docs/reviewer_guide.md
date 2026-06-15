@@ -26,6 +26,7 @@ In another PowerShell window:
 Invoke-RestMethod http://localhost:8000/health
 .venv\Scripts\python.exe scripts\run_api_smoke_eval.py
 .venv\Scripts\python.exe scripts\run_cqc_eval.py --report-md eval\reports\cqc_latest.md
+.venv\Scripts\python.exe scripts\run_failure_diagnostics.py
 .venv\Scripts\python.exe -m pytest tests -q
 .venv\Scripts\python.exe scripts\run_reviewer_pack.py
 ```
@@ -39,7 +40,9 @@ embedding model is available. The lite profile runs with honest BM25 fallback.
 2. Run `/health`.
 3. Run one `/query` request from the README.
 4. Open the generated `eval/reports/cqc_latest.md`.
-5. Inspect `debug.retrieved_chunk_ids` and `citations`.
+5. Run Failure Diagnostics Lite and open
+   `eval/reports/failure_diagnostics_latest.md`.
+6. Inspect `debug.retrieved_chunk_ids` and `citations`.
 
 ## What To Inspect
 
@@ -48,9 +51,11 @@ embedding model is available. The lite profile runs with honest BM25 fallback.
 - `api/main.py`
 - `scripts/run_api_smoke_eval.py`
 - `scripts/run_cqc_eval.py`
+- `scripts/run_failure_diagnostics.py`
 - `scripts/run_reviewer_pack.py`
 - `eval/queries/cqc_scenarios_5.json`
 - `docs/cqc_rag_lite_notes.md`
+- `docs/failure_diagnostics_lite.md`
 - `docs/evaluation_notes.md`
 
 ## Review Order
