@@ -1,6 +1,8 @@
 """Tests for the CQC-RAG Lite evaluation harness."""
 
 import copy
+import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -130,3 +132,51 @@ def test_evaluate_variant_extracts_response_fields_without_network(monkeypatch):
     assert record["identified_flag_codes"] == ["RF-01", "RF-02"]
     assert record["citation_chunk_ids"] == ["chunk-1", "chunk-2"]
     assert record["retrieved_chunk_ids"] == ["chunk-1", "chunk-2"]
+
+
+def test_render_markdown_report_with_synthetic_group_results():
+    passed = run_cqc_eval.summarize_group(_valid_group(), [_record() for _ in range(4)])
+    failed = run_cqc_eval.summarize_group(
+        _valid_group() | {"group_id": "failed-group"},
+        [
+            _record(
+                identified_flag_codes=[f"RF-{index}"],
+                citation_chunk_ids=[f"chunk-{index}"],
+                retrieved_chunk_ids=[f"chunk-{index}"],
+            )
+            for index in range(1, 5)
+        ],
+    )
+
+    report = run_cqc_eval.render_markdown_report(
+        [passed, failed],
+        "http://example.test",
+        datetime(2026, 6, 15, 6, 30, tzinfo=timezone.utc),
+    )
+
+    assert report.startswith("# CQC-RAG Lite Evaluation Report\n")
+    assert "**Timestamp:** 2026-06-15T06:30:00+00:00" in report
+    assert "**Base URL:** `http://example.test`" in report
+    assert "**Scenario groups passed:** 1 / 2" in report
+    assert "## synthetic-group" in report
+    assert "## failed-group" in report
+    assert "**Identified flag consistency:**" in report
+    assert "**Citation overlap summary:**" in report
+    assert "**Retrieved chunk overlap summary:**" in report
+    assert "**Pass/fail reason:** Failed consistency threshold:" in report
+    assert "not a model-quality benchmark or full CQC-RAG reproduction" in report
+
+
+def test_write_jsonl_preserves_line_oriented_output(tmp_path):
+    records = [
+        {"record_type": "variant", "query": "中文 query"},
+        {"record_type": "group_summary", "passed": True},
+    ]
+    output = tmp_path / "results" / "cqc.jsonl"
+
+    run_cqc_eval.write_jsonl(output, records)
+
+    lines = output.read_text(encoding="utf-8").splitlines()
+    assert len(lines) == 2
+    assert [json.loads(line) for line in lines] == records
+    assert "中文 query" in lines[0]

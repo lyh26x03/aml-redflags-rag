@@ -165,6 +165,8 @@ The evaluator uses mock mode by default and requires a running FastAPI service.
 ```
 
 Output is written to `eval/results/cqc_latest.jsonl`.
+The evaluator also writes a human-readable runtime report to
+`eval/reports/cqc_latest.md`.
 
 See [`docs/cqc_rag_lite_notes.md`](docs/cqc_rag_lite_notes.md) for the
 engineering scope, interpretation guidance, and explicit non-goals.

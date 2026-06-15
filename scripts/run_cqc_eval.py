@@ -4,6 +4,7 @@ import argparse
 import json
 import sys
 from collections import Counter
+from datetime import datetime, timezone
 from itertools import combinations
 from pathlib import Path
 from typing import Any
@@ -14,6 +15,7 @@ from urllib.request import Request, urlopen
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_INPUT = REPO_ROOT / "eval" / "queries" / "cqc_scenarios_5.json"
 DEFAULT_OUTPUT = REPO_ROOT / "eval" / "results" / "cqc_latest.jsonl"
+DEFAULT_REPORT_MD = REPO_ROOT / "eval" / "reports" / "cqc_latest.md"
 EXPECTED_OUTCOMES = {
     "stable_possible": ("possible", False),
     "stable_unlikely": ("unlikely", False),
@@ -29,6 +31,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--base-url", default="http://localhost:8000")
     parser.add_argument("--input", type=Path, default=DEFAULT_INPUT)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument("--report-md", type=Path, default=DEFAULT_REPORT_MD)
     parser.add_argument("--timeout", type=float, default=30.0)
     return parser.parse_args()
 
@@ -229,6 +232,100 @@ def load_groups(path: Path) -> list[dict[str, Any]]:
     return validate_groups(json.loads(path.read_text(encoding="utf-8")))
 
 
+def write_jsonl(path: Path, records: list[dict[str, Any]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as output:
+        for record in records:
+            output.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+
+def _expected_target(summary: dict[str, Any]) -> str:
+    assessment, refused = EXPECTED_OUTCOMES[summary["expected_behavior"]]
+    return (
+        f"{summary['expected_behavior']}: assessment={assessment}, "
+        f"refused={str(refused).lower()}, "
+        f"set overlap >= {summary['set_consistency_threshold']:.2f}"
+    )
+
+
+def _pass_fail_reason(summary: dict[str, Any]) -> str:
+    if summary["passed"]:
+        return "Passed all expected outcome and consistency checks."
+    failed_metrics = [
+        label
+        for label, value in (
+            ("identified flag overlap", summary["flag_jaccard_avg"]),
+            ("citation overlap", summary["citation_jaccard_avg"]),
+            ("retrieved chunk overlap", summary["retrieved_chunk_jaccard_avg"]),
+        )
+        if value < summary["set_consistency_threshold"]
+    ]
+    if failed_metrics:
+        return "Failed consistency threshold: " + ", ".join(failed_metrics) + "."
+    return "Failed one or more expected outcome or request checks."
+
+
+def render_markdown_report(
+    summaries: list[dict[str, Any]],
+    base_url: str,
+    timestamp: datetime | None = None,
+) -> str:
+    generated_at = timestamp or datetime.now(timezone.utc)
+    passed = sum(summary["passed"] for summary in summaries)
+    lines = [
+        "# CQC-RAG Lite Evaluation Report",
+        "",
+        f"- **Timestamp:** {generated_at.astimezone(timezone.utc).isoformat()}",
+        f"- **Base URL:** `{base_url}`",
+        f"- **Scenario groups passed:** {passed} / {len(summaries)}",
+        "",
+        "> This is a cross-query consistency regression report, not a model-quality benchmark or full CQC-RAG reproduction.",
+        "",
+        "## Group Status",
+        "",
+        "| Group ID | Status | Expected consistency target | Variants |",
+        "|---|---|---|---:|",
+    ]
+    for summary in summaries:
+        status = "PASS" if summary["passed"] else "FAIL"
+        lines.append(
+            f"| `{summary['group_id']}` | **{status}** | "
+            f"{_expected_target(summary)} | {summary['variant_count']} |"
+        )
+
+    for summary in summaries:
+        status = "PASS" if summary["passed"] else "FAIL"
+        lines.extend(
+            [
+                "",
+                f"## {summary['group_id']}",
+                "",
+                f"- **Status:** {status}",
+                f"- **Expected consistency target:** {_expected_target(summary)}",
+                f"- **Variants count:** {summary['variant_count']}",
+                f"- **Assessment consistency:** {summary['assessment_consistency']:.4f}",
+                f"- **Identified flag consistency:** {summary['flag_jaccard_avg']:.4f} average pairwise Jaccard",
+                f"- **Citation overlap summary:** {summary['citation_jaccard_avg']:.4f} average pairwise Jaccard",
+                f"- **Retrieved chunk overlap summary:** {summary['retrieved_chunk_jaccard_avg']:.4f} average pairwise Jaccard",
+                f"- **Pass/fail reason:** {_pass_fail_reason(summary)}",
+            ]
+        )
+    return "\n".join(lines) + "\n"
+
+
+def write_markdown_report(
+    path: Path,
+    summaries: list[dict[str, Any]],
+    base_url: str,
+    timestamp: datetime | None = None,
+) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        render_markdown_report(summaries, base_url, timestamp),
+        encoding="utf-8",
+    )
+
+
 def main() -> int:
     args = parse_args()
     try:
@@ -253,10 +350,8 @@ def main() -> int:
         summaries.append(summary)
         output_records.append(summary)
 
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    with args.output.open("w", encoding="utf-8") as output:
-        for record in output_records:
-            output.write(json.dumps(record, ensure_ascii=False) + "\n")
+    write_jsonl(args.output, output_records)
+    write_markdown_report(args.report_md, summaries, args.base_url)
 
     passed = sum(summary["passed"] for summary in summaries)
     print(f"CQC-RAG lite: {passed} / {len(summaries)} groups passed")
