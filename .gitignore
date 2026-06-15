@@ -23,6 +23,7 @@ data/private/
 tmp/
 outputs/
 eval/results/*_latest.jsonl
+eval/reports/*_latest.md
 
 # large/generated retrieval artifacts
 artifacts/index/*
