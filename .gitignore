@@ -24,6 +24,7 @@ tmp/
 outputs/
 eval/results/*_latest.jsonl
 eval/reports/*_latest.md
+eval/reports/reviewer_latest.md
 
 # large/generated retrieval artifacts
 artifacts/index/*

@@ -171,6 +171,19 @@ The evaluator also writes a human-readable runtime report to
 See [`docs/cqc_rag_lite_notes.md`](docs/cqc_rag_lite_notes.md) for the
 engineering scope, interpretation guidance, and explicit non-goals.
 
+## Reviewer Demo Pack
+
+The reviewer pack runs the repository's static checks and, when the FastAPI
+service is already running, the live API smoke and CQC-RAG Lite evaluations.
+
+```powershell
+.venv\Scripts\python.exe scripts\run_reviewer_pack.py
+```
+
+Live API checks require the service to already be running. See the
+[`reviewer guide`](docs/reviewer_guide.md) and
+[`demo scope ADR`](docs/adr/0001-demo-scope-and-honesty.md).
+
 ## Verification
 
 ```powershell
