@@ -1,0 +1,117 @@
+[
+  {
+    "group_id": "virtual-asset-rapid-movement",
+    "description": "Rapid pass-through movement involving a virtual asset exchange.",
+    "expected_behavior": "stable_possible",
+    "variants": [
+      {
+        "variant_id": "va-rapid-1",
+        "query": "Funds show rapid movement through a virtual asset exchange."
+      },
+      {
+        "variant_id": "va-rapid-2",
+        "query": "A virtual asset exchange receives funds that are rapidly transferred out."
+      },
+      {
+        "variant_id": "va-rapid-3",
+        "query": "Assess rapid movement of funds through a cryptocurrency exchange."
+      },
+      {
+        "variant_id": "va-rapid-4",
+        "query": "Incoming funds pass through a virtual asset exchange with rapid movement onward."
+      }
+    ]
+  },
+  {
+    "group_id": "third-party-control",
+    "description": "An unrelated third party operates and directs activity in the account.",
+    "expected_behavior": "stable_possible",
+    "variants": [
+      {
+        "variant_id": "third-party-1",
+        "query": "An unrelated third party operates the customer's account and directs each transaction."
+      },
+      {
+        "variant_id": "third-party-2",
+        "query": "The customer's account is controlled by a third party with no clear relationship."
+      },
+      {
+        "variant_id": "third-party-3",
+        "query": "A third party unrelated to the customer directs the account activity."
+      },
+      {
+        "variant_id": "third-party-4",
+        "query": "Assess an account operated under the instructions of an unrelated third party."
+      }
+    ]
+  },
+  {
+    "group_id": "profile-mismatch",
+    "description": "Account activity is inconsistent with the customer's declared occupation and expected profile.",
+    "expected_behavior": "stable_possible",
+    "variants": [
+      {
+        "variant_id": "profile-1",
+        "query": "The transaction activity shows a profile mismatch and is inconsistent with the customer's occupation."
+      },
+      {
+        "variant_id": "profile-2",
+        "query": "Assess a profile mismatch where account activity is inconsistent with the declared occupation."
+      },
+      {
+        "variant_id": "profile-3",
+        "query": "The customer's transaction pattern is inconsistent with occupation, indicating a profile mismatch."
+      },
+      {
+        "variant_id": "profile-4",
+        "query": "A profile mismatch exists because transaction volume is inconsistent with the customer's occupation."
+      }
+    ]
+  },
+  {
+    "group_id": "insufficient-evidence-unlikely",
+    "description": "Ordinary activity without details supporting a covered AML red flag.",
+    "expected_behavior": "stable_unlikely",
+    "variants": [
+      {
+        "variant_id": "unlikely-1",
+        "query": "The customer made an ordinary payment with no unusual details provided."
+      },
+      {
+        "variant_id": "unlikely-2",
+        "query": "Assess an ordinary payment; no unusual details are available."
+      },
+      {
+        "variant_id": "unlikely-3",
+        "query": "Only a routine customer payment is described, with no unusual details."
+      },
+      {
+        "variant_id": "unlikely-4",
+        "query": "There is an ordinary payment and no unusual information supporting a red flag."
+      }
+    ]
+  },
+  {
+    "group_id": "out-of-scope-refusal",
+    "description": "A sanctions-only request that is explicitly outside the demo knowledge scope.",
+    "expected_behavior": "stable_refuse",
+    "variants": [
+      {
+        "variant_id": "refuse-1",
+        "query": "Assess this sanctions evasion case."
+      },
+      {
+        "variant_id": "refuse-2",
+        "query": "Determine whether this activity involves sanctions evasion."
+      },
+      {
+        "variant_id": "refuse-3",
+        "query": "Review this case solely for sanctions violations."
+      },
+      {
+        "variant_id": "refuse-4",
+        "query": "Evaluate the described conduct as a sanctions compliance matter."
+      }
+    ]
+  }
+]

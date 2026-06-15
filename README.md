@@ -150,6 +150,22 @@ retrieval benchmark.
 
 Per-case results are written to `eval/results/api_smoke_latest.jsonl`.
 
+## CQC-RAG Lite
+
+CQC-RAG lite is a cross-query consistency evaluation, not a model quality
+benchmark. It checks whether semantically similar query variants produce
+stable assessments, identified flags, citations, and retrieved chunks.
+It does not reproduce the historical retrieval benchmark or implement query
+rewriting, reranking, logits-based scoring, or answer selection.
+
+The evaluator uses mock mode by default and requires a running FastAPI service.
+
+```powershell
+.venv\Scripts\python.exe scripts\run_cqc_eval.py
+```
+
+Output is written to `eval/results/cqc_latest.jsonl`.
+
 ## Verification
 
 ```powershell
