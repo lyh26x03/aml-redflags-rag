@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     api_port: int = 8000
 
     artifact_dir: str = "artifacts/index"
-    llm_mode: str = "mock"  # mock | gemini | groq
+    llm_mode: str = "mock"  # mock | gemini | gemma | groq
     model_name: str = "mock-local"
 
     gemini_api_key: str = ""

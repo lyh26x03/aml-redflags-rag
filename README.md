@@ -21,7 +21,7 @@ system, or a substitute for an AML investigator.
 | Honest dense-to-BM25 degradation | Implemented | Exposed through `debug.fallback_used` and `fallback_reason` |
 | Rule-based Pre-LLM Gate | Implemented | TBML, sanctions, and tax-evasion scope refusals |
 | Deterministic mock generation | Implemented | Default; no keys or network calls |
-| Groq / Gemini REST generation | Experimental | Key-gated; failures fall back to mock |
+| Groq / Gemini / Gemma REST generation | Experimental | Key-gated; failures fall back to mock |
 | Semantic scope classifier | Experimental | Off by default; enable with `ENABLE_SEMANTIC_GATE=true` |
 | Included knowledge corpus | Demo sample only | 12 hand-written bilingual chunks, not FATF source text |
 | Offline private-PDF indexing | Implemented, operator-run | Requires full profile and private PDFs |
@@ -79,6 +79,42 @@ cp .env.example .env
 
 Open `http://localhost:8000/health`. Mock mode is the default and requires no
 API keys.
+
+## Optional Live Gemma Mode Via Google AI Studio
+
+Mock mode remains the default and requires no API key. To use the optional
+Gemma live path, provide a Google AI Studio API key through `GEMINI_API_KEY`
+and explicitly select a Gemma model available to that key. Model availability
+can vary, so this repository does not hardcode a universal Gemma model ID.
+
+```powershell
+Copy-Item .env.example .env
+# Edit .env:
+# LLM_MODE=gemma
+# MODEL_NAME=<your-available-gemma-model-id>
+# GEMINI_API_KEY=<your-google-ai-studio-key>
+
+.venv\Scripts\python.exe -m uvicorn api.main:app --reload
+```
+
+Optional manual live smoke request:
+
+```powershell
+$body = @{
+  query = "Funds show rapid movement through a virtual asset exchange."
+  retrieval_mode = "hybrid"
+  llm_mode = "gemma"
+  include_debug = $true
+} | ConvertTo-Json
+
+Invoke-RestMethod -Uri http://localhost:8000/query `
+  -Method Post -ContentType "application/json" -Body $body
+```
+
+Gemma uses the existing Google Generative Language API `generateContent` path.
+Its live responses are still normalized against retrieved evidence, and
+provider errors or malformed responses fall back to mock with debug details.
+Automated tests use mocked provider responses and do not require a real key.
 
 ## Quick Start: Docker Compose
 
@@ -301,7 +337,7 @@ notebooks_archive/       committed notebook migration sources
   or `refuse`.
 - Dense startup needs the model in cache or network access. If unavailable,
   the service degrades to BM25 and reports why.
-- Live Groq/Gemini paths are not verified without operator-provided keys.
+- Live Groq/Gemini/Gemma paths are not verified without operator-provided keys.
 - The semantic gate threshold is experimental and disabled by default.
 - Multi-turn state, intent routing, ingestion APIs, databases, and evaluation
   endpoints are not implemented in the service.
