@@ -184,6 +184,11 @@ Live API checks require the service to already be running. See the
 [`reviewer guide`](docs/reviewer_guide.md) and
 [`demo scope ADR`](docs/adr/0001-demo-scope-and-honesty.md).
 
+## Demo Walkthrough
+
+For a human-readable interview/demo narrative, see
+[`docs/demo_walkthrough.md`](docs/demo_walkthrough.md).
+
 ## Verification
 
 ```powershell

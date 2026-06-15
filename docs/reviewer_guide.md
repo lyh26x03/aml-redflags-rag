@@ -56,11 +56,12 @@ embedding model is available. The lite profile runs with honest BM25 fallback.
 ## Review Order
 
 1. `README.md`
-2. `docs/reviewer_guide.md`
-3. `docs/adr/0001-demo-scope-and-honesty.md`
-4. `scripts/run_reviewer_pack.py`
-5. `scripts/run_cqc_eval.py`
-6. `tests/`
+2. `docs/demo_walkthrough.md`
+3. `docs/reviewer_guide.md`
+4. `docs/adr/0001-demo-scope-and-honesty.md`
+5. `scripts/run_reviewer_pack.py`
+6. `scripts/run_cqc_eval.py`
+7. `tests/`
 
 ## What This Repo Does Not Claim
 
