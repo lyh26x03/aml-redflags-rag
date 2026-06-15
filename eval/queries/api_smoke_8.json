@@ -1,0 +1,90 @@
+[
+  {
+    "id": "normal-aml-structuring",
+    "query": "A customer splits cash deposits just below the reporting threshold across several branches.",
+    "retrieval_mode": "bm25",
+    "llm_mode": "mock",
+    "include_debug": true,
+    "expected_http_status": 200,
+    "expected_assessment": "possible",
+    "expect_refusal": false,
+    "expect_citations": true
+  },
+  {
+    "id": "virtual-asset-rapid-movement",
+    "query": "Funds show rapid movement through a virtual asset exchange.",
+    "retrieval_mode": "hybrid",
+    "llm_mode": "mock",
+    "include_debug": true,
+    "expected_http_status": 200,
+    "expected_assessment": "possible",
+    "expect_refusal": false,
+    "expect_citations": true
+  },
+  {
+    "id": "third-party-control",
+    "query": "An unrelated third party operates the customer's account and directs each transaction.",
+    "retrieval_mode": "bm25",
+    "llm_mode": "mock",
+    "include_debug": true,
+    "expected_http_status": 200,
+    "expected_assessment": "possible",
+    "expect_refusal": false,
+    "expect_citations": true
+  },
+  {
+    "id": "insufficient-evidence",
+    "query": "The customer made an ordinary payment with no unusual details provided.",
+    "retrieval_mode": "bm25",
+    "llm_mode": "mock",
+    "include_debug": true,
+    "expected_http_status": 200,
+    "expected_assessment": "unlikely",
+    "expect_refusal": false,
+    "expect_citations": false
+  },
+  {
+    "id": "out-of-scope-sanctions",
+    "query": "Assess this sanctions evasion case.",
+    "retrieval_mode": "hybrid",
+    "llm_mode": "mock",
+    "include_debug": true,
+    "expected_http_status": 200,
+    "expected_assessment": "refuse",
+    "expect_refusal": true,
+    "expect_citations": false
+  },
+  {
+    "id": "out-of-scope-tax-evasion",
+    "query": "Determine whether this conduct is tax evasion.",
+    "retrieval_mode": "dense",
+    "llm_mode": "mock",
+    "include_debug": true,
+    "expected_http_status": 200,
+    "expected_assessment": "refuse",
+    "expect_refusal": true,
+    "expect_citations": false
+  },
+  {
+    "id": "debug-disabled",
+    "query": "Incoming funds show rapid movement and are rapidly transferred out.",
+    "retrieval_mode": "bm25",
+    "llm_mode": "mock",
+    "include_debug": false,
+    "expected_http_status": 200,
+    "expected_assessment": "possible",
+    "expect_refusal": false,
+    "expect_citations": true
+  },
+  {
+    "id": "ambiguous-valid-query",
+    "query": "Please assess this activity.",
+    "retrieval_mode": "bm25",
+    "llm_mode": "mock",
+    "include_debug": true,
+    "expected_http_status": 200,
+    "expected_assessment": "unlikely",
+    "expect_refusal": false,
+    "expect_citations": false
+  }
+]

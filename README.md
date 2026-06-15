@@ -138,10 +138,22 @@ curl http://localhost:8000/sources
 artifacts leave the service running in degraded mode and make `/query` return a
 clear `503 ARTIFACTS_NOT_FOUND` response.
 
+## API Smoke Eval
+
+The API smoke eval is a contract smoke test for a running FastAPI service. It
+does not calculate P@K or MRR, and it does not claim to reproduce the historical
+retrieval benchmark.
+
+```powershell
+.venv\Scripts\python.exe scripts\run_api_smoke_eval.py
+```
+
+Per-case results are written to `eval/results/api_smoke_latest.jsonl`.
+
 ## Verification
 
 ```powershell
-.venv\Scripts\python.exe -m compileall api rag_core indexing tests
+.venv\Scripts\python.exe -m compileall api rag_core indexing tests scripts
 .venv\Scripts\python.exe -m pytest tests -q
 ```
 
