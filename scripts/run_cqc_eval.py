@@ -225,10 +225,14 @@ def validate_groups(groups: Any) -> list[dict[str, Any]]:
     return groups
 
 
+def load_groups(path: Path) -> list[dict[str, Any]]:
+    return validate_groups(json.loads(path.read_text(encoding="utf-8")))
+
+
 def main() -> int:
     args = parse_args()
     try:
-        groups = validate_groups(json.loads(args.input.read_text(encoding="utf-8")))
+        groups = load_groups(args.input)
     except (OSError, json.JSONDecodeError, ValueError) as error:
         print(f"CQC-RAG lite input error: {error}", file=sys.stderr)
         return 1
