@@ -39,6 +39,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--out-md", type=Path, default=DEFAULT_OUTPUT_MD)
     parser.add_argument("--timeout", type=float, default=30.0)
     parser.add_argument("--corpus-label")
+    parser.add_argument(
+        "--save-snapshot",
+        action="store_true",
+        help="Also write dated archive copies alongside the latest outputs.",
+    )
     return parser.parse_args(argv)
 
 
@@ -74,6 +79,50 @@ def validate_queries(queries: Any) -> list[dict[str, str]]:
 
 def load_queries(path: Path) -> list[dict[str, str]]:
     return validate_queries(json.loads(path.read_text(encoding="utf-8")))
+
+
+def _filename_token(value: str | None, fallback: str) -> str:
+    if not value:
+        return fallback
+    cleaned = [
+        char.lower()
+        if char.isalnum() or char in {"-", "_"}
+        else "-"
+        for char in value.strip()
+    ]
+    token = "".join(cleaned).strip("-_")
+    while "--" in token:
+        token = token.replace("--", "-")
+    return token or fallback
+
+
+def resolve_snapshot_paths(
+    out_jsonl: Path,
+    out_md: Path,
+    *,
+    timestamp: datetime,
+    requested_modes: list[str],
+    corpus_label: str | None = None,
+    corpus_profile: str | None = None,
+) -> tuple[Path, Path]:
+    date_token = timestamp.strftime("%Y%m%d")
+    corpus_token = _filename_token(
+        corpus_label or corpus_profile,
+        fallback="unknown",
+    )
+    modes_token = _filename_token("-".join(requested_modes), fallback="mock")
+    base_stem = f"model_matrix_{date_token}_{corpus_token}_{modes_token}"
+    json_archive_dir = out_jsonl.parent / "archive"
+    md_archive_dir = out_md.parent / "archive"
+
+    revision = 1
+    while True:
+        suffix = "" if revision == 1 else f"_r{revision}"
+        jsonl_path = json_archive_dir / f"{base_stem}{suffix}.jsonl"
+        md_path = md_archive_dir / f"{base_stem}{suffix}.md"
+        if not jsonl_path.exists() and not md_path.exists():
+            return jsonl_path, md_path
+        revision += 1
 
 
 def _decode_json(raw_body: str) -> Any:
@@ -448,6 +497,28 @@ def main(argv: list[str] | None = None) -> int:
         corpus_label=args.corpus_label,
     )
 
+    snapshot_paths: tuple[Path, Path] | None = None
+    if args.save_snapshot:
+        snapshot_paths = resolve_snapshot_paths(
+            args.out_jsonl,
+            args.out_md,
+            timestamp=timestamp,
+            requested_modes=requested_modes,
+            corpus_label=args.corpus_label,
+            corpus_profile=metadata.get("corpus_profile"),
+        )
+        write_jsonl(snapshot_paths[0], records)
+        write_markdown_report(
+            snapshot_paths[1],
+            records,
+            run_id=run_id,
+            timestamp_utc=timestamp_utc,
+            base_url=args.base_url,
+            requested_modes=requested_modes,
+            metadata=metadata,
+            corpus_label=args.corpus_label,
+        )
+
     unsupported = sum(record["status"] == "unsupported" for record in records)
     errors = sum(record["status"] in {"error", "service_error"} for record in records)
     ok = sum(record["status"] == "ok" for record in records)
@@ -457,6 +528,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     print(f"JSONL written to {args.out_jsonl}")
     print(f"Report written to {args.out_md}")
+    if snapshot_paths is not None:
+        print(f"Snapshot JSONL written to {snapshot_paths[0]}")
+        print(f"Snapshot report written to {snapshot_paths[1]}")
     return 1 if errors else 0
 
 

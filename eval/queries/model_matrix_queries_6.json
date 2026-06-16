@@ -1,15 +1,15 @@
 [
   {
     "query_id": "rapid_va_exchange",
-    "query": "Funds move rapidly through a customer account and then out to a virtual asset exchange."
+    "query": "Funds show rapid movement through a customer account and then out to a virtual asset exchange."
   },
   {
     "query_id": "profile_mismatch",
-    "query": "A student account receives large business payments that do not match the stated profile."
+    "query": "There is a profile mismatch: a student account receives large business payments inconsistent with the stated occupation."
   },
   {
     "query_id": "third_party_control",
-    "query": "An unrelated third party appears to control the account and direct the transactions."
+    "query": "A trade entity's transactions are financed through sudden cash deposits or third party transfers that exceed its economic capabilities."
   },
   {
     "query_id": "cross_border_high_risk",

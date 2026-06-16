@@ -82,7 +82,7 @@ def test_query_works_in_mock_mode_with_public_226_profile():
         response = client.post(
             "/query",
             json={
-                "query": "A virtual asset exchange customer uses a mixer and rapidly transfers funds.",
+                "query": "A virtual asset exchange customer shows rapid movement of funds and uses a mixer.",
                 "top_k": 3,
                 "retrieval_mode": "bm25",
                 "llm_mode": "mock",
@@ -91,7 +91,9 @@ def test_query_works_in_mock_mode_with_public_226_profile():
         )
         assert response.status_code == 200
         body = response.json()
-        assert body["assessment"] in {"possible", "unlikely"}
+        assert body["assessment"] == "possible"
+        assert {item["code"] for item in body["identified_flags"]} >= {"RF-02", "RF-07"}
+        assert body["citations"]
         assert body["refusal"]["refused"] is False
         assert body["debug"]["retrieval_mode"] == "bm25"
         assert body["debug"]["bm25_used"] is True

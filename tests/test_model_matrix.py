@@ -1,6 +1,7 @@
 """Tests for the provider/mode matrix runner."""
 
 import json
+from datetime import datetime, timezone
 
 from scripts import run_model_matrix
 
@@ -37,6 +38,7 @@ def test_parse_args_defaults_to_mock_only():
     args = run_model_matrix.parse_args([])
 
     assert args.modes == "mock"
+    assert args.save_snapshot is False
     assert run_model_matrix.parse_modes(args.modes) == ["mock"]
 
 
@@ -85,6 +87,11 @@ def test_markdown_renderer_includes_required_sections_and_note():
     )
 
     assert report.startswith("# Model Matrix Runner Report\n")
+    assert "- **Run ID:** `matrix-1`" in report
+    assert "- **Modes requested:** mock" in report
+    assert "- **Corpus profile:** public_226" in report
+    assert "- **Corpus label:** public_226" in report
+    assert "- **Total chunks:** 226" in report
     assert "## Summary By Mode" in report
     assert "## Per-Query Comparison" in report
     assert "provider/mode behavior smoke matrix" in report
@@ -121,3 +128,173 @@ def test_jsonl_writer_writes_line_oriented_json(tmp_path):
     lines = output.read_text(encoding="utf-8").splitlines()
     assert len(lines) == 2
     assert [json.loads(line) for line in lines] == records
+
+
+def test_resolve_snapshot_paths_uses_archive_dir_and_increments_revision(tmp_path):
+    out_jsonl = tmp_path / "results" / "model_matrix_latest.jsonl"
+    out_md = tmp_path / "reports" / "model_matrix_latest.md"
+    timestamp = datetime(2026, 6, 16, tzinfo=timezone.utc)
+
+    first_jsonl, first_md = run_model_matrix.resolve_snapshot_paths(
+        out_jsonl,
+        out_md,
+        timestamp=timestamp,
+        requested_modes=["mock", "gemini"],
+        corpus_label="public_226",
+        corpus_profile="sample",
+    )
+    assert first_jsonl == (
+        tmp_path
+        / "results"
+        / "archive"
+        / "model_matrix_20260616_public_226_mock-gemini.jsonl"
+    )
+    assert first_md == (
+        tmp_path
+        / "reports"
+        / "archive"
+        / "model_matrix_20260616_public_226_mock-gemini.md"
+    )
+
+    first_jsonl.parent.mkdir(parents=True, exist_ok=True)
+    first_jsonl.write_text("existing", encoding="utf-8")
+
+    second_jsonl, second_md = run_model_matrix.resolve_snapshot_paths(
+        out_jsonl,
+        out_md,
+        timestamp=timestamp,
+        requested_modes=["mock", "gemini"],
+        corpus_label="public_226",
+        corpus_profile="sample",
+    )
+    assert second_jsonl.name == "model_matrix_20260616_public_226_mock-gemini_r2.jsonl"
+    assert second_md.name == "model_matrix_20260616_public_226_mock-gemini_r2.md"
+
+
+def test_main_writes_latest_outputs_without_snapshot(tmp_path, monkeypatch):
+    queries_path = tmp_path / "queries.json"
+    queries_path.write_text(
+        json.dumps(
+            [
+                {
+                    "query_id": "case-1",
+                    "query": "Example query",
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+    out_jsonl = tmp_path / "results" / "model_matrix_latest.jsonl"
+    out_md = tmp_path / "reports" / "model_matrix_latest.md"
+
+    monkeypatch.setattr(
+        run_model_matrix,
+        "fetch_service_metadata",
+        lambda *args, **kwargs: {"corpus_profile": "public_226", "total_chunks": 226},
+    )
+    monkeypatch.setattr(
+        run_model_matrix,
+        "evaluate_query_mode",
+        lambda run_id, timestamp_utc, base_url, mode, query_case, timeout, metadata: _record(
+            mode,
+            "ok",
+            12,
+            query_id=query_case["query_id"],
+            query=query_case["query"],
+            corpus_profile=metadata["corpus_profile"],
+            total_chunks=metadata["total_chunks"],
+        ),
+    )
+
+    exit_code = run_model_matrix.main(
+        [
+            "--queries",
+            str(queries_path),
+            "--out-jsonl",
+            str(out_jsonl),
+            "--out-md",
+            str(out_md),
+            "--modes",
+            "mock,gemini",
+        ]
+    )
+
+    assert exit_code == 0
+    assert out_jsonl.exists()
+    assert out_md.exists()
+    assert not (tmp_path / "results" / "archive").exists()
+    assert not (tmp_path / "reports" / "archive").exists()
+
+
+def test_main_with_save_snapshot_writes_archive_copy(tmp_path, monkeypatch):
+    queries_path = tmp_path / "queries.json"
+    queries_path.write_text(
+        json.dumps([{"query_id": "case-1", "query": "Example query"}]),
+        encoding="utf-8",
+    )
+    out_jsonl = tmp_path / "results" / "model_matrix_latest.jsonl"
+    out_md = tmp_path / "reports" / "model_matrix_latest.md"
+
+    monkeypatch.setattr(
+        run_model_matrix,
+        "fetch_service_metadata",
+        lambda *args, **kwargs: {"corpus_profile": "public_226", "total_chunks": 226},
+    )
+    monkeypatch.setattr(
+        run_model_matrix,
+        "evaluate_query_mode",
+        lambda run_id, timestamp_utc, base_url, mode, query_case, timeout, metadata: _record(
+            mode,
+            "ok",
+            12,
+            query_id=query_case["query_id"],
+            query=query_case["query"],
+            corpus_profile=metadata["corpus_profile"],
+            total_chunks=metadata["total_chunks"],
+        ),
+    )
+    fixed_timestamp = datetime(2026, 6, 16, tzinfo=timezone.utc)
+
+    class _FixedDateTime:
+        @staticmethod
+        def now(tz=None):
+            if tz is None:
+                return fixed_timestamp.replace(tzinfo=None)
+            return fixed_timestamp.astimezone(tz)
+
+    monkeypatch.setattr(run_model_matrix, "datetime", _FixedDateTime)
+
+    exit_code = run_model_matrix.main(
+        [
+            "--queries",
+            str(queries_path),
+            "--out-jsonl",
+            str(out_jsonl),
+            "--out-md",
+            str(out_md),
+            "--modes",
+            "mock",
+            "--corpus-label",
+            "public_226",
+            "--save-snapshot",
+        ]
+    )
+
+    snapshot_jsonl = (
+        tmp_path
+        / "results"
+        / "archive"
+        / "model_matrix_20260616_public_226_mock.jsonl"
+    )
+    snapshot_md = (
+        tmp_path
+        / "reports"
+        / "archive"
+        / "model_matrix_20260616_public_226_mock.md"
+    )
+
+    assert exit_code == 0
+    assert out_jsonl.exists()
+    assert out_md.exists()
+    assert snapshot_jsonl.exists()
+    assert snapshot_md.exists()

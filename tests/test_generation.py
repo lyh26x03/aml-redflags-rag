@@ -18,6 +18,17 @@ CHUNKS = [
         "related_flags": ["RF-02"],
     }
 ]
+PUBLIC_CHUNK_NO_FLAGS = {
+    "chunk_id": "fatf_virtual_assets_red_flags.pdf_p15_c7",
+    "source": "FATF",
+    "page": 15,
+    "doc_category": "sector_specific",
+    "doc_type": "red_flag",
+    "text": (
+        "The account holder used mixing and immediately transferred funds out "
+        "of the account through a virtual asset exchange."
+    ),
+}
 
 
 class _FakeResponse:
@@ -47,6 +58,28 @@ def test_query_request_accepts_gemma_mode():
     request = QueryRequest(query=QUERY, llm_mode="gemma")
 
     assert request.llm_mode == "gemma"
+
+
+def test_mock_generate_derives_chunk_flags_when_related_flags_are_absent():
+    result = generation.mock_generate(
+        query="Funds show rapid movement through an account and out to a virtual asset exchange.",
+        chunks=[PUBLIC_CHUNK_NO_FLAGS],
+    )
+
+    assert result["assessment"] == "possible"
+    assert {item["code"] for item in result["identified_flags"]} == {"RF-02", "RF-07"}
+    assert [citation["chunk_id"] for citation in result["citations"]] == [
+        "fatf_virtual_assets_red_flags.pdf_p15_c7"
+    ]
+
+
+def test_chunk_flags_keep_existing_related_flags_behavior():
+    chunk = {
+        **PUBLIC_CHUNK_NO_FLAGS,
+        "related_flags": ["RF-04"],
+    }
+
+    assert generation._chunk_flags(chunk) == {"RF-04"}
 
 
 def test_gemma_missing_key_falls_back_to_mock():

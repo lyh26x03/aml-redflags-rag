@@ -253,8 +253,13 @@ class Retriever:
                 "text": r["chunk"].get("text", ""),
                 "score": r["score"],
                 "doc_category": r["chunk"].get("doc_category", "unknown"),
+                "doc_type": r["chunk"].get("doc_type", "unknown"),
                 "explanation_style": r["chunk"].get("explanation_style", "neutral"),
-                "related_flags": r["chunk"].get("related_flags", []),
+                "related_flags": (
+                    r["chunk"]["related_flags"]
+                    if "related_flags" in r["chunk"]
+                    else None
+                ),
             }
             for r in search_results
         ]

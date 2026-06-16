@@ -44,6 +44,74 @@ TOPIC_TO_FLAGS: Dict[str, Set[str]] = {
     "shell_company": {"RF-08"},
 }
 
+CHUNK_TOPIC_HINTS: Dict[str, Set[str]] = {
+    "virtual_assets": {
+        "virtual asset",
+        "virtual assets",
+        "vasp",
+        "wallet",
+        "bitcoin",
+        "crypto",
+        "mixing",
+        "tumbling",
+        "privacy coin",
+        "aec",
+        "peer-to-peer",
+        "p2p",
+    },
+    "cash_structuring": {
+        "structuring",
+        "small amounts",
+        "reporting threshold",
+        "record-keeping",
+        "divided payments",
+        "just below",
+    },
+    "rapid_movement": {
+        "rapid movement",
+        "pay-through",
+        "pay -through",
+        "pass-through",
+        "transit account",
+        "immediately transferred",
+        "small end-of-day balance",
+        "in short succession",
+    },
+    "third_party": {
+        "third party",
+        "third-party",
+        "money mule",
+        "nominee",
+        "controlled by",
+    },
+    "cross_border": {
+        "cross-border",
+        "cross -border",
+        "high-risk jurisdiction",
+        "high risk jurisdiction",
+        "jurisdictions",
+        "across borders",
+        "offshore",
+        "free trade zone",
+    },
+    "identity_mismatch": {
+        "customer profile",
+        "stated business activity",
+        "historical financial profile",
+        "available wealth",
+        "inconsistent explanation",
+    },
+    "shell_company": {
+        "shell company",
+        "front company",
+        "beneficial owner",
+        "beneficial owners",
+        "opaque ownership",
+    },
+}
+
+TOPIC_DETECTOR = TopicDetector()
+
 SYSTEM_PROMPT = """\
 You are an AML (anti-money-laundering) red-flag analysis assistant.
 
@@ -99,7 +167,7 @@ def build_user_prompt(query: str, chunks: List[Dict[str, Any]]) -> str:
 
 
 def _query_candidate_flags(query: str) -> Set[str]:
-    topics = TopicDetector().detect_topics(query)
+    topics = TOPIC_DETECTOR.detect_topics(query)
     return {
         flag
         for topic in topics
@@ -107,11 +175,40 @@ def _query_candidate_flags(query: str) -> Set[str]:
     }
 
 
+def _chunk_signal_text(chunk: Dict[str, Any]) -> str:
+    return " ".join(
+        str(value)
+        for value in (
+            chunk.get("source"),
+            chunk.get("doc_category"),
+            chunk.get("doc_type"),
+            chunk.get("text"),
+        )
+        if value
+    )
+
+
+def _fallback_chunk_topics(chunk: Dict[str, Any]) -> Set[str]:
+    signal_text = _chunk_signal_text(chunk)
+    detected = set(TOPIC_DETECTOR.detect_topics(signal_text))
+    signal_text_lower = signal_text.lower()
+    for topic, hints in CHUNK_TOPIC_HINTS.items():
+        if any(hint in signal_text_lower for hint in hints):
+            detected.add(topic)
+    return detected
+
+
 def _chunk_flags(chunk: Dict[str, Any]) -> Set[str]:
+    raw_flags = chunk.get("related_flags") if "related_flags" in chunk else None
+    if raw_flags is not None:
+        if not isinstance(raw_flags, (list, tuple, set)):
+            return set()
+        return {flag for flag in raw_flags if flag in RF_CATALOG}
+
     return {
         flag
-        for flag in chunk.get("related_flags", [])
-        if flag in RF_CATALOG
+        for topic in _fallback_chunk_topics(chunk)
+        for flag in TOPIC_TO_FLAGS.get(topic, set())
     }
 
 
