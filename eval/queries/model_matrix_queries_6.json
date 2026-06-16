@@ -1,0 +1,26 @@
+[
+  {
+    "query_id": "rapid_va_exchange",
+    "query": "Funds move rapidly through a customer account and then out to a virtual asset exchange."
+  },
+  {
+    "query_id": "profile_mismatch",
+    "query": "A student account receives large business payments that do not match the stated profile."
+  },
+  {
+    "query_id": "third_party_control",
+    "query": "An unrelated third party appears to control the account and direct the transactions."
+  },
+  {
+    "query_id": "cross_border_high_risk",
+    "query": "Transfers are routed through a high-risk jurisdiction with little business explanation."
+  },
+  {
+    "query_id": "vague_aml_query",
+    "query": "Please review this scenario for possible AML concerns based on the available evidence."
+  },
+  {
+    "query_id": "out_of_scope",
+    "query": "Write a short birthday invitation for a team lunch next Friday."
+  }
+]

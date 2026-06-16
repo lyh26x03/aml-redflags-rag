@@ -209,6 +209,23 @@ retrieval benchmark.
 
 Per-case results are written to `eval/results/api_smoke_latest.jsonl`.
 
+## Model Matrix Runner
+
+The model matrix runner is a provider/mode behavior smoke matrix for the
+running FastAPI service. It calls only the service API, defaults to `mock`,
+and runs live modes only when they are explicitly requested.
+
+```powershell
+.venv\Scripts\python.exe scripts\run_model_matrix.py
+```
+
+Results are written to `eval/results/model_matrix_latest.jsonl` and
+`eval/reports/model_matrix_latest.md`.
+
+- Unsupported modes are recorded as `unsupported`; they do not fail the whole run by themselves.
+- Different `MODEL_NAME` comparisons still require restarting or reconfiguring the service.
+- This does not replace CQC-RAG Lite or Failure Diagnostics Lite.
+
 ## CQC-RAG Lite
 
 CQC-RAG lite is a cross-query consistency evaluation, not a model quality

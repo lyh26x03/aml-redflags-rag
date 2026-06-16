@@ -22,6 +22,7 @@ data/private/
 # temporary outputs
 *.log
 tmp/
+_handoff/
 outputs/
 eval/results/*_latest.jsonl
 eval/reports/*_latest.md
