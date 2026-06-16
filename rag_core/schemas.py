@@ -52,7 +52,11 @@ class RetrievalDebug(BaseModel):
     fallback_used: bool
     retrieved_chunk_ids: List[str]
     requested_mode: Optional[str] = None
+    llm_model_name: Optional[str] = None
     fallback_reason: Optional[str] = None
+    error_type: Optional[str] = None
+    http_status: Optional[int] = None
+    parse_success: Optional[bool] = None
 
 
 class QueryResponse(BaseModel):
@@ -61,15 +65,21 @@ class QueryResponse(BaseModel):
     identified_flags: List[IdentifiedFlag] = Field(default_factory=list)
     citations: List[Citation] = Field(default_factory=list)
     refusal: RefusalInfo = Field(default_factory=RefusalInfo)
+    parse_success: Optional[bool] = None
     debug: Optional[RetrievalDebug] = None
 
 
 class HealthResponse(BaseModel):
     status: Literal["ok", "degraded"]
     service: str = "aml-redflags-rag-api"
+    corpus_profile: str = "sample"
     artifacts_loaded: bool
     llm_mode: str
+    model_name: str
     index_version: Optional[str] = None
+    chunk_count: int = 0
+    source_count: int = 0
+    source_names: List[str] = Field(default_factory=list)
     message: Optional[str] = None
 
 
@@ -81,7 +91,11 @@ class SourceSummary(BaseModel):
 
 
 class SourcesResponse(BaseModel):
+    corpus_profile: str = "sample"
     index_version: Optional[str] = None
+    chunk_count: int = 0
     total_chunks: int = 0
+    source_count: int = 0
+    source_names: List[str] = Field(default_factory=list)
     sources: List[SourceSummary] = Field(default_factory=list)
     message: Optional[str] = None

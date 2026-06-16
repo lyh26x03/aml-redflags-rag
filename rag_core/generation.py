@@ -20,6 +20,10 @@ from typing import Any, Dict, List, Optional, Set
 
 import httpx
 
+from rag_core.error_sanitization import (
+    build_provider_error_details,
+    describe_provider_error,
+)
 from rag_core.gate import TopicDetector
 
 
@@ -43,6 +47,74 @@ TOPIC_TO_FLAGS: Dict[str, Set[str]] = {
     "virtual_assets": {"RF-07"},
     "shell_company": {"RF-08"},
 }
+
+CHUNK_TOPIC_HINTS: Dict[str, Set[str]] = {
+    "virtual_assets": {
+        "virtual asset",
+        "virtual assets",
+        "vasp",
+        "wallet",
+        "bitcoin",
+        "crypto",
+        "mixing",
+        "tumbling",
+        "privacy coin",
+        "aec",
+        "peer-to-peer",
+        "p2p",
+    },
+    "cash_structuring": {
+        "structuring",
+        "small amounts",
+        "reporting threshold",
+        "record-keeping",
+        "divided payments",
+        "just below",
+    },
+    "rapid_movement": {
+        "rapid movement",
+        "pay-through",
+        "pay -through",
+        "pass-through",
+        "transit account",
+        "immediately transferred",
+        "small end-of-day balance",
+        "in short succession",
+    },
+    "third_party": {
+        "third party",
+        "third-party",
+        "money mule",
+        "nominee",
+        "controlled by",
+    },
+    "cross_border": {
+        "cross-border",
+        "cross -border",
+        "high-risk jurisdiction",
+        "high risk jurisdiction",
+        "jurisdictions",
+        "across borders",
+        "offshore",
+        "free trade zone",
+    },
+    "identity_mismatch": {
+        "customer profile",
+        "stated business activity",
+        "historical financial profile",
+        "available wealth",
+        "inconsistent explanation",
+    },
+    "shell_company": {
+        "shell company",
+        "front company",
+        "beneficial owner",
+        "beneficial owners",
+        "opaque ownership",
+    },
+}
+
+TOPIC_DETECTOR = TopicDetector()
 
 SYSTEM_PROMPT = """\
 You are an AML (anti-money-laundering) red-flag analysis assistant.
@@ -99,7 +171,7 @@ def build_user_prompt(query: str, chunks: List[Dict[str, Any]]) -> str:
 
 
 def _query_candidate_flags(query: str) -> Set[str]:
-    topics = TopicDetector().detect_topics(query)
+    topics = TOPIC_DETECTOR.detect_topics(query)
     return {
         flag
         for topic in topics
@@ -107,11 +179,40 @@ def _query_candidate_flags(query: str) -> Set[str]:
     }
 
 
+def _chunk_signal_text(chunk: Dict[str, Any]) -> str:
+    return " ".join(
+        str(value)
+        for value in (
+            chunk.get("source"),
+            chunk.get("doc_category"),
+            chunk.get("doc_type"),
+            chunk.get("text"),
+        )
+        if value
+    )
+
+
+def _fallback_chunk_topics(chunk: Dict[str, Any]) -> Set[str]:
+    signal_text = _chunk_signal_text(chunk)
+    detected = set(TOPIC_DETECTOR.detect_topics(signal_text))
+    signal_text_lower = signal_text.lower()
+    for topic, hints in CHUNK_TOPIC_HINTS.items():
+        if any(hint in signal_text_lower for hint in hints):
+            detected.add(topic)
+    return detected
+
+
 def _chunk_flags(chunk: Dict[str, Any]) -> Set[str]:
+    raw_flags = chunk.get("related_flags") if "related_flags" in chunk else None
+    if raw_flags is not None:
+        if not isinstance(raw_flags, (list, tuple, set)):
+            return set()
+        return {flag for flag in raw_flags if flag in RF_CATALOG}
+
     return {
         flag
-        for flag in chunk.get("related_flags", [])
-        if flag in RF_CATALOG
+        for topic in _fallback_chunk_topics(chunk)
+        for flag in TOPIC_TO_FLAGS.get(topic, set())
     }
 
 
@@ -321,11 +422,15 @@ def generate(
     if llm_mode == "mock" or not gate_allowed:
         return {
             **mock,
+            "parse_success": None,
             "_generation_debug": {
                 "requested_llm_mode": llm_mode,
                 "effective_llm_mode": "mock",
+                "llm_model_name": None,
                 "fallback_used": False,
                 "fallback_reason": None,
+                "error_type": None,
+                "http_status": None,
             },
         }
 
@@ -334,17 +439,27 @@ def generate(
     if llm_mode == "gemma" and (
         not provider_model or provider_model == "mock-local"
     ):
+        error = build_provider_error_details(
+            llm_mode,
+            provider_model or "",
+            error_type="invalid_model_config",
+            message=(
+                "MODEL_NAME must be set to an available Gemma model ID for "
+                "llm_mode=gemma. Check Google AI Studio / Gemini API model "
+                "availability."
+            ),
+        )
         return {
             **mock,
+            "parse_success": None,
             "_generation_debug": {
                 "requested_llm_mode": llm_mode,
                 "effective_llm_mode": "mock",
+                "llm_model_name": provider_model or None,
                 "fallback_used": True,
-                "fallback_reason": (
-                    "MODEL_NAME must be set to an available Gemma model ID for "
-                    "llm_mode=gemma. Check Google AI Studio / Gemini API model "
-                    "availability."
-                ),
+                "fallback_reason": error.fallback_reason,
+                "error_type": error.error_type,
+                "http_status": error.http_status,
             },
         }
     if not provider_model or provider_model == "mock-local":
@@ -367,20 +482,33 @@ def generate(
         normalized = _normalize_live_result(live, query, chunks)
         return {
             **normalized,
+            "parse_success": True,
             "_generation_debug": {
                 "requested_llm_mode": llm_mode,
                 "effective_llm_mode": llm_mode,
+                "llm_model_name": provider_model,
                 "fallback_used": False,
                 "fallback_reason": None,
+                "error_type": None,
+                "http_status": None,
             },
         }
     except Exception as exc:
+        error = describe_provider_error(
+            exc,
+            provider=llm_mode,
+            model_name=provider_model,
+        )
         return {
             **mock,
+            "parse_success": error.parse_success,
             "_generation_debug": {
                 "requested_llm_mode": llm_mode,
                 "effective_llm_mode": "mock",
+                "llm_model_name": provider_model,
                 "fallback_used": True,
-                "fallback_reason": str(exc),
+                "fallback_reason": error.fallback_reason,
+                "error_type": error.error_type,
+                "http_status": error.http_status,
             },
         }

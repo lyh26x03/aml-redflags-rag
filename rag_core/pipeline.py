@@ -71,10 +71,14 @@ class RAGPipeline:
                 rrf_used=retrieval.rrf_used,
                 gate_decision=gate.decision_label,
                 llm_mode=generation_debug["effective_llm_mode"],
+                llm_model_name=generation_debug["llm_model_name"],
                 fallback_used=(
                     retrieval.fallback_used or generation_debug["fallback_used"]
                 ),
                 fallback_reason="; ".join(fallback_reasons) or None,
+                error_type=generation_debug["error_type"],
+                http_status=generation_debug["http_status"],
+                parse_success=generated.get("parse_success"),
                 retrieved_chunk_ids=retrieval.chunk_ids,
             )
 

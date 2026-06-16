@@ -10,12 +10,14 @@ from rag_core.config import Settings
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 ARTIFACT_DIR = REPO_ROOT / "artifacts" / "index"
+PUBLIC_226_DIR = REPO_ROOT / "data" / "public_corpus_226"
 
 
 def _client(artifact_dir: Path = ARTIFACT_DIR, **settings_overrides):
     settings = Settings(
         artifact_dir=str(artifact_dir),
         llm_mode="mock",
+        model_name="mock-local",
         enable_debug=True,
         **settings_overrides,
     )
@@ -25,15 +27,85 @@ def _client(artifact_dir: Path = ARTIFACT_DIR, **settings_overrides):
 def test_health_and_sources():
     with _client() as client:
         health = client.get("/health")
+        body = health.json()
         assert health.status_code == 200
-        assert health.json()["status"] == "ok"
-        assert health.json()["artifacts_loaded"] is True
+        assert body["status"] == "ok"
+        assert body["service"] == "aml-redflags-rag-api"
+        assert body["corpus_profile"] == "sample"
+        assert body["artifacts_loaded"] is True
+        assert body["llm_mode"] == "mock"
+        assert body["model_name"] == "mock-local"
+        assert body["chunk_count"] == 12
+        assert body["source_count"] == 3
 
         sources = client.get("/sources")
         assert sources.status_code == 200
+        assert sources.json()["corpus_profile"] == "sample"
         assert sources.json()["index_version"] == "demo-sample-v1"
+        assert sources.json()["chunk_count"] == 12
         assert sources.json()["total_chunks"] == 12
+        assert sources.json()["source_count"] == 3
         assert len(sources.json()["sources"]) == 3
+
+
+def test_public_226_profile_loads_and_reports_sources():
+    with _client(
+        artifact_dir=ARTIFACT_DIR,
+        corpus_profile="public_226",
+        public_226_artifact_dir=str(PUBLIC_226_DIR),
+    ) as client:
+        health = client.get("/health")
+        body = health.json()
+        assert health.status_code == 200
+        assert body["status"] == "ok"
+        assert body["corpus_profile"] == "public_226"
+        assert body["llm_mode"] == "mock"
+        assert body["model_name"] == "mock-local"
+        assert body["index_version"] == "public-226-v2"
+        assert body["chunk_count"] == 226
+        assert body["source_count"] == 3
+        assert body["source_names"] == [
+            "FATF Trade-Based Money Laundering Risk Indicators",
+            "FATF Virtual Assets Red Flag Indicators",
+            "Taiwan AML Training Slides",
+        ]
+
+        sources = client.get("/sources")
+        assert sources.status_code == 200
+        body = sources.json()
+        assert body["corpus_profile"] == "public_226"
+        assert body["index_version"] == "public-226-v2"
+        assert body["chunk_count"] == 226
+        assert body["total_chunks"] == 226
+        assert body["source_count"] == 3
+        assert [source["chunk_count"] for source in body["sources"]] == [51, 165, 10]
+
+
+def test_query_works_in_mock_mode_with_public_226_profile():
+    with _client(
+        artifact_dir=ARTIFACT_DIR,
+        corpus_profile="public_226",
+        public_226_artifact_dir=str(PUBLIC_226_DIR),
+    ) as client:
+        response = client.post(
+            "/query",
+            json={
+                "query": "A virtual asset exchange customer shows rapid movement of funds and uses a mixer.",
+                "top_k": 3,
+                "retrieval_mode": "bm25",
+                "llm_mode": "mock",
+                "include_debug": True,
+            },
+        )
+        assert response.status_code == 200
+        body = response.json()
+        assert body["assessment"] == "possible"
+        assert {item["code"] for item in body["identified_flags"]} >= {"RF-02", "RF-07"}
+        assert body["citations"]
+        assert body["refusal"]["refused"] is False
+        assert body["debug"]["retrieval_mode"] == "bm25"
+        assert body["debug"]["bm25_used"] is True
+        assert len(body["debug"]["retrieved_chunk_ids"]) == 3
 
 
 def test_query_happy_path_and_fallback_labeling():
@@ -61,9 +133,11 @@ def test_query_happy_path_and_fallback_labeling():
             "identified_flags",
             "citations",
             "refusal",
+            "parse_success",
             "debug",
         }
         assert body["assessment"] == "possible"
+        assert body["parse_success"] is None
         assert body["citations"]
         assert body["refusal"]["refused"] is False
         assert body["debug"]["requested_mode"] == "hybrid"
@@ -114,9 +188,11 @@ def test_include_debug_defaults_to_true_when_setting_enabled():
 def test_missing_artifacts_degrade_without_crashing(tmp_path):
     with _client(tmp_path / "missing") as client:
         health = client.get("/health")
+        body = health.json()
         assert health.status_code == 200
-        assert health.json()["status"] == "degraded"
-        assert health.json()["artifacts_loaded"] is False
+        assert body["status"] == "degraded"
+        assert body["artifacts_loaded"] is False
+        assert body["model_name"] == "mock-local"
 
         query = client.post("/query", json={"query": "rapid movement"})
         assert query.status_code == 503

@@ -17,10 +17,12 @@ migration_staging/
 data/raw/
 data/private/
 *.pdf
+!data/public_corpus_226/sources/*.pdf
 
 # temporary outputs
 *.log
 tmp/
+_handoff/
 outputs/
 eval/results/*_latest.jsonl
 eval/reports/*_latest.md

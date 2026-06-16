@@ -25,6 +25,7 @@ MISSING_ARTIFACTS_MESSAGE = (
 class ArtifactState:
     loaded: bool = False
     artifact_dir: str = ""
+    corpus_profile: str = "sample"
     chunks: List[Dict[str, Any]] = field(default_factory=list)
     manifest: Optional[Dict[str, Any]] = None
     message: str = ""
@@ -35,16 +36,31 @@ class ArtifactState:
             return self.manifest.get("version")
         return None
 
+    @property
+    def source_summaries(self) -> List[Dict[str, Any]]:
+        if not self.manifest:
+            return []
+        sources = self.manifest.get("sources", [])
+        return sources if isinstance(sources, list) else []
+
+    @property
+    def source_names(self) -> List[str]:
+        return [
+            str(source["source_name"])
+            for source in self.source_summaries
+            if isinstance(source, dict) and source.get("source_name")
+        ]
+
 
 def _read_json(path: Path) -> Any:
     with path.open("r", encoding="utf-8") as f:
         return json.load(f)
 
 
-def load_artifacts(artifact_dir: str) -> ArtifactState:
-    """Load chunks.json (required) and manifest.json (optional)."""
+def load_artifacts(artifact_dir: str, corpus_profile: str = "sample") -> ArtifactState:
+    """Load chunks.json (required) and a manifest JSON file (optional)."""
     base = Path(artifact_dir)
-    state = ArtifactState(artifact_dir=str(base))
+    state = ArtifactState(artifact_dir=str(base), corpus_profile=corpus_profile)
 
     if not base.is_dir():
         state.message = MISSING_ARTIFACTS_MESSAGE
@@ -75,8 +91,15 @@ def load_artifacts(artifact_dir: str) -> ArtifactState:
         return state
 
     manifest = None
-    manifest_path = base / "manifest.json"
-    if manifest_path.is_file():
+    manifest_path = next(
+        (
+            candidate
+            for candidate in (base / "source_manifest.json", base / "manifest.json")
+            if candidate.is_file()
+        ),
+        None,
+    )
+    if manifest_path is not None:
         try:
             loaded = _read_json(manifest_path)
             if isinstance(loaded, dict):

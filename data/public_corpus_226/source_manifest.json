@@ -1,0 +1,65 @@
+{
+  "version": "public-226-v2",
+  "artifact_type": "public_corpus",
+  "corpus_profile": "public_226",
+  "created_at": "2026-02-10T07:20:24.023073",
+  "description": "Public 226-chunk AML corpus imported from the legacy notebook handoff. chunks.json is the canonical service corpus; BM25 and optional dense indexes are rebuilt in memory at service startup.",
+  "config": {
+    "embedding_model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+    "chunk_size": 400,
+    "chunk_overlap": 80
+  },
+  "stats": {
+    "total_chunks": 226,
+    "total_vectors": 226,
+    "vector_dimension": 384
+  },
+  "sources": [
+    {
+      "source_name": "FATF Trade-Based Money Laundering Risk Indicators",
+      "file_name": "fatf_tbm_laundering_red_flags.pdf",
+      "source": "FATF",
+      "language": "en",
+      "layer": "core",
+      "doc_category": "core",
+      "chunk_count": 51,
+      "retrieval_priority": 1.0,
+      "public": true
+    },
+    {
+      "source_name": "FATF Virtual Assets Red Flag Indicators",
+      "file_name": "fatf_virtual_assets_red_flags.pdf",
+      "source": "FATF",
+      "language": "en",
+      "layer": "sector_specific",
+      "doc_category": "sector_specific",
+      "chunk_count": 165,
+      "retrieval_priority": 0.9,
+      "public": true
+    },
+    {
+      "source_name": "Taiwan AML Training Slides",
+      "file_name": "tw_aml_training_slides.pdf",
+      "source": "TW_Gov",
+      "language": "zh",
+      "layer": "knowledge_bridge",
+      "doc_category": "knowledge_bridge",
+      "chunk_count": 10,
+      "retrieval_priority": 0.8,
+      "public": true
+    }
+  ],
+  "notebook_weighting": {
+    "service_mapping": "The legacy notebook used per-chunk retrieval_priority values during hybrid retrieval by multiplying the RRF score by that value. The imported chunks preserve retrieval_priority exactly; the service retriever already applies this weighting for hybrid retrieval.",
+    "source_priority_values": {
+      "fatf_tbm_laundering_red_flags.pdf": 1.0,
+      "fatf_virtual_assets_red_flags.pdf": 0.9,
+      "tw_aml_training_slides.pdf": 0.8
+    }
+  },
+  "legacy_artifacts": {
+    "faiss_index_bin": "Reference only; not required for service startup.",
+    "bm25_index_pkl": "Reference only; BM25 is rebuilt from chunks.json.",
+    "tokenized_corpus_pkl": "Reference only; tokenized corpus is rebuilt from chunks.json."
+  }
+}

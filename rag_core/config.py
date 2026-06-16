@@ -5,6 +5,7 @@ starts (in mock mode) with no configuration at all.
 """
 
 from functools import lru_cache
+from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -21,7 +22,9 @@ class Settings(BaseSettings):
     api_host: str = "0.0.0.0"
     api_port: int = 8000
 
+    corpus_profile: Literal["sample", "public_226"] = "sample"
     artifact_dir: str = "artifacts/index"
+    public_226_artifact_dir: str = "data/public_corpus_226"
     llm_mode: str = "mock"  # mock | gemini | gemma | groq
     model_name: str = "mock-local"
 
@@ -33,6 +36,12 @@ class Settings(BaseSettings):
     default_retrieval_mode: str = "hybrid"  # hybrid | dense | bm25
     enable_debug: bool = True
     enable_semantic_gate: bool = False  # experimental; needs dense backend
+
+    @property
+    def resolved_artifact_dir(self) -> str:
+        if self.corpus_profile == "public_226":
+            return self.public_226_artifact_dir
+        return self.artifact_dir
 
 
 @lru_cache
