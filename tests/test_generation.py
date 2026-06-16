@@ -3,6 +3,7 @@
 import json
 
 from rag_core import generation
+from rag_core.config import Settings
 from rag_core.schemas import QueryRequest
 
 
@@ -115,6 +116,51 @@ def test_gemma_success_uses_google_generate_content(monkeypatch):
     }
 
 
+def test_generate_passes_configured_timeout_to_call_llm(monkeypatch):
+    calls = []
+
+    def fake_call_llm(system_prompt, user_prompt, llm_config, timeout=30.0):
+        calls.append(
+            {
+                "system_prompt": system_prompt,
+                "user_prompt": user_prompt,
+                "llm_config": llm_config,
+                "timeout": timeout,
+            }
+        )
+        return {
+            "answer": "The evidence supports possible rapid movement.",
+            "assessment": "possible",
+            "identified_flags": [{"code": "RF-02"}],
+            "citations": [{"chunk_id": "invented"}],
+        }
+
+    monkeypatch.setattr(generation, "call_llm", fake_call_llm)
+
+    result = generation.generate(
+        query=QUERY,
+        chunks=CHUNKS,
+        llm_mode="gemma",
+        model_name="some-gemma-model",
+        gemini_api_key="fake",
+        llm_timeout_seconds=123.0,
+    )
+
+    assert calls == [
+        {
+            "system_prompt": generation.SYSTEM_PROMPT,
+            "user_prompt": generation.build_user_prompt(QUERY, CHUNKS),
+            "llm_config": {
+                "provider": "gemma",
+                "llm_model_name": "some-gemma-model",
+                "api_key": "fake",
+            },
+            "timeout": 123.0,
+        }
+    ]
+    assert result["_generation_debug"]["effective_llm_mode"] == "gemma"
+
+
 def test_gemma_malformed_google_response_falls_back_to_mock(monkeypatch):
     monkeypatch.setattr(
         generation.httpx,
@@ -164,3 +210,10 @@ def test_mock_mode_remains_deterministic_and_does_not_fallback(monkeypatch):
     assert first == second
     assert first["assessment"] == "possible"
     assert first["_generation_debug"]["fallback_used"] is False
+
+
+def test_settings_exposes_llm_timeout_seconds(monkeypatch):
+    monkeypatch.setenv("LLM_TIMEOUT_SECONDS", "120")
+    settings = Settings()
+
+    assert settings.llm_timeout_seconds == 120.0

@@ -46,6 +46,7 @@ class RAGPipeline:
             model_name=self.settings.model_name,
             gemini_api_key=self.settings.gemini_api_key,
             groq_api_key=self.settings.groq_api_key,
+            llm_timeout_seconds=self.settings.llm_timeout_seconds,
             gate_allowed=gate.allowed,
             gate_reason=gate.reason_message or gate.reason_code,
         )
