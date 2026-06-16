@@ -312,6 +312,7 @@ def generate(
     model_name: str = "mock-local",
     gemini_api_key: str = "",
     groq_api_key: str = "",
+    llm_timeout_seconds: float = 300.0,
     gate_allowed: bool = True,
     gate_reason: Optional[str] = None,
 ) -> Dict[str, Any]:
@@ -361,6 +362,7 @@ def generate(
                 "llm_model_name": provider_model,
                 "api_key": api_key,
             },
+            timeout=llm_timeout_seconds,
         )
         normalized = _normalize_live_result(live, query, chunks)
         return {
