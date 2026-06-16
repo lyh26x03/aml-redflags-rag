@@ -16,6 +16,7 @@ Live Groq / Google generateContent paths:
 """
 
 import json
+import re
 from typing import Any, Dict, List, Optional, Set
 
 import httpx
@@ -217,12 +218,124 @@ def _call_groq(
     return json.loads(response.json()["choices"][0]["message"]["content"])
 
 
+_JSON_FENCE_RE = re.compile(r"^```(?:json)?\s*(.*?)\s*```$", re.IGNORECASE | re.DOTALL)
+_GOOGLE_API_KEY_RE = re.compile(r"AIza[0-9A-Za-z\-_]{20,}")
+_BEARER_TOKEN_RE = re.compile(r"Bearer\s+[A-Za-z0-9._\-]+", re.IGNORECASE)
+_GENERIC_KEY_VALUE_RE = re.compile(
+    r'(?i)\b((?:api[_ -]?key|authorization|token|key)\s*[:=]\s*)(["\']?)([^,"\s]+)(\2)'
+)
+
+
+def _sanitize_text_preview(text: Any, limit: int = 400) -> str:
+    preview = " ".join(str(text or "").split())
+    preview = _GOOGLE_API_KEY_RE.sub("[REDACTED_API_KEY]", preview)
+    preview = _BEARER_TOKEN_RE.sub("Bearer [REDACTED]", preview)
+    preview = _GENERIC_KEY_VALUE_RE.sub(r"\1[REDACTED]", preview)
+    if len(preview) > limit:
+        return preview[:limit] + "...[truncated]"
+    return preview
+
+
+def _extract_single_json_object(text: str) -> Optional[str]:
+    objects: List[str] = []
+    depth = 0
+    start: Optional[int] = None
+    in_string = False
+    escaped = False
+
+    for index, char in enumerate(text):
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+            continue
+
+        if char == '"':
+            in_string = True
+            continue
+        if char == "{":
+            if depth == 0:
+                start = index
+            depth += 1
+            continue
+        if char == "}":
+            if depth == 0:
+                continue
+            depth -= 1
+            if depth == 0 and start is not None:
+                objects.append(text[start:index + 1])
+                start = None
+
+    if len(objects) == 1:
+        return objects[0]
+    return None
+
+
+def _parse_model_json_text(text: str) -> Dict[str, Any]:
+    stripped = str(text or "").strip()
+    if not stripped:
+        raise ValueError("Google provider returned empty text")
+
+    candidate_texts = [stripped]
+    fenced_match = _JSON_FENCE_RE.match(stripped)
+    if fenced_match:
+        candidate_texts.append(fenced_match.group(1).strip())
+
+    extracted = _extract_single_json_object(stripped)
+    if extracted and extracted not in candidate_texts:
+        candidate_texts.append(extracted)
+
+    for candidate_text in candidate_texts:
+        if not candidate_text:
+            continue
+        try:
+            parsed = json.loads(candidate_text)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(parsed, dict):
+            raise ValueError("Google provider returned non-object JSON")
+        return parsed
+
+    preview = _sanitize_text_preview(stripped)
+    raise ValueError(
+        "Google provider returned malformed JSON text. "
+        f"preview={preview!r}"
+    )
+
+
+def _google_parse_error(
+    provider_name: str,
+    model_name: str,
+    error: Exception,
+    raw_text: str = "",
+    finish_reason: Optional[str] = None,
+    candidate_count: Optional[int] = None,
+) -> ValueError:
+    details = [
+        f"provider={provider_name}",
+        f"model_name={model_name}",
+        f"error_type={type(error).__name__}",
+        f"error={error}",
+        f"raw_text_length={len(raw_text)}",
+        f"raw_text_preview={_sanitize_text_preview(raw_text)!r}",
+    ]
+    if finish_reason is not None:
+        details.append(f"finish_reason={finish_reason}")
+    if candidate_count is not None:
+        details.append(f"candidate_count={candidate_count}")
+    return ValueError("Google generateContent parse failed: " + ", ".join(details))
+
+
 def _call_google_generate_content(
     system_prompt: str,
     user_prompt: str,
     model_name: str,
     api_key: str,
     timeout: float,
+    provider_name: str = "google",
 ) -> Dict[str, Any]:
     url = (
         "https://generativelanguage.googleapis.com/v1beta/models/"
@@ -242,8 +355,50 @@ def _call_google_generate_content(
         timeout=timeout,
     )
     response.raise_for_status()
-    text = response.json()["candidates"][0]["content"]["parts"][0]["text"]
-    return json.loads(text)
+
+    candidate_count: Optional[int] = None
+    finish_reason: Optional[str] = None
+    raw_text = ""
+    try:
+        body = response.json()
+        candidates = body.get("candidates")
+        if not isinstance(candidates, list):
+            raise ValueError("Google provider response is missing candidates list")
+        candidate_count = len(candidates)
+        if candidate_count == 0:
+            raise ValueError("Google provider returned no candidates")
+
+        first_candidate = candidates[0]
+        if not isinstance(first_candidate, dict):
+            raise ValueError("Google provider returned an invalid candidate entry")
+
+        finish_reason_value = first_candidate.get("finishReason")
+        if finish_reason_value is not None:
+            finish_reason = str(finish_reason_value)
+
+        content = first_candidate.get("content")
+        if not isinstance(content, dict):
+            raise ValueError("Google provider response is missing candidate content")
+
+        parts = content.get("parts")
+        if not isinstance(parts, list):
+            raise ValueError("Google provider response is missing candidate parts")
+
+        raw_text = "".join(
+            str(part.get("text", ""))
+            for part in parts
+            if isinstance(part, dict)
+        )
+        return _parse_model_json_text(raw_text)
+    except Exception as exc:
+        raise _google_parse_error(
+            provider_name=provider_name,
+            model_name=model_name,
+            error=exc,
+            raw_text=raw_text,
+            finish_reason=finish_reason,
+            candidate_count=candidate_count,
+        ) from exc
 
 
 def call_llm(
@@ -263,7 +418,12 @@ def call_llm(
     if provider == "groq":
         return _call_groq(system_prompt, user_prompt, model_name, api_key, timeout)
     return _call_google_generate_content(
-        system_prompt, user_prompt, model_name, api_key, timeout
+        system_prompt,
+        user_prompt,
+        model_name,
+        api_key,
+        timeout,
+        provider_name=provider,
     )
 
 

@@ -112,9 +112,12 @@ Invoke-RestMethod -Uri http://localhost:8000/query `
 ```
 
 Gemma uses the existing Google Generative Language API `generateContent` path.
-Its live responses are still normalized against retrieved evidence, and
-provider errors or malformed responses fall back to mock with debug details.
-Automated tests use mocked provider responses and do not require a real key.
+Its live responses are parsed as JSON because the API response contract is
+structured, then normalized against retrieved evidence. Provider parse failures
+fall back to mock, and `debug.fallback_reason` includes sanitized diagnostics
+for local troubleshooting. Do not paste API keys or full provider responses
+into issues or chats. Automated tests use mocked provider responses and do not
+require a real key.
 
 ## Quick Start: Docker Compose
 

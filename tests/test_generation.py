@@ -2,6 +2,8 @@
 
 import json
 
+import pytest
+
 from rag_core import generation
 from rag_core.config import Settings
 from rag_core.schemas import QueryRequest
@@ -41,6 +43,46 @@ def _google_payload(result):
             }
         ]
     }
+
+
+def test_parse_model_json_text_accepts_normal_json_object():
+    parsed = generation._parse_model_json_text('{"answer":"ok","assessment":"unlikely"}')
+
+    assert parsed == {"answer": "ok", "assessment": "unlikely"}
+
+
+def test_parse_model_json_text_accepts_fenced_json_object():
+    parsed = generation._parse_model_json_text(
+        '```json\n{"answer":"ok","assessment":"unlikely"}\n```'
+    )
+
+    assert parsed == {"answer": "ok", "assessment": "unlikely"}
+
+
+def test_parse_model_json_text_extracts_single_object_from_surrounding_text():
+    parsed = generation._parse_model_json_text(
+        'Here is the result:\n{"answer":"ok","assessment":"unlikely"}\nThanks.'
+    )
+
+    assert parsed == {"answer": "ok", "assessment": "unlikely"}
+
+
+def test_parse_model_json_text_rejects_empty_text_with_clear_error():
+    with pytest.raises(ValueError, match="Google provider returned empty text"):
+        generation._parse_model_json_text("   ")
+
+
+def test_parse_model_json_text_rejects_malformed_text_with_sanitized_preview():
+    with pytest.raises(ValueError) as exc_info:
+        generation._parse_model_json_text(
+            "noise api_key=AIzaSyDONTLEAK012345678901234 malformed {not-json"
+        )
+
+    message = str(exc_info.value)
+    assert "malformed JSON text" in message
+    assert "preview=" in message
+    assert "DONTLEAK" not in message
+    assert "[REDACTED]" in message
 
 
 def test_query_request_accepts_gemma_mode():
@@ -179,7 +221,42 @@ def test_gemma_malformed_google_response_falls_back_to_mock(monkeypatch):
     debug = result["_generation_debug"]
     assert debug["effective_llm_mode"] == "mock"
     assert debug["fallback_used"] is True
-    assert debug["fallback_reason"]
+    assert "Google generateContent parse failed" in debug["fallback_reason"]
+    assert "candidate_count=0" in debug["fallback_reason"]
+    assert "provider=gemma" in debug["fallback_reason"]
+    assert "model_name=some-gemma-model" in debug["fallback_reason"]
+
+
+def test_gemma_google_response_with_empty_text_in_parts_falls_back_with_length(monkeypatch):
+    monkeypatch.setattr(
+        generation.httpx,
+        "post",
+        lambda *args, **kwargs: _FakeResponse(
+            {
+                "candidates": [
+                    {
+                        "finishReason": "STOP",
+                        "content": {"parts": [{"text": ""}]},
+                    }
+                ]
+            }
+        ),
+    )
+
+    result = generation.generate(
+        query=QUERY,
+        chunks=CHUNKS,
+        llm_mode="gemma",
+        model_name="some-gemma-model",
+        gemini_api_key="fake",
+    )
+
+    debug = result["_generation_debug"]
+    assert debug["effective_llm_mode"] == "mock"
+    assert debug["fallback_used"] is True
+    assert "raw_text_length=0" in debug["fallback_reason"]
+    assert "candidate_count=1" in debug["fallback_reason"]
+    assert "finish_reason=STOP" in debug["fallback_reason"]
 
 
 def test_unsupported_provider_falls_back_to_mock():
