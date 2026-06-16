@@ -27,6 +27,7 @@ class Settings(BaseSettings):
 
     gemini_api_key: str = ""
     groq_api_key: str = ""
+    llm_timeout_seconds: float = 90.0
 
     default_top_k: int = 5
     default_retrieval_mode: str = "hybrid"  # hybrid | dense | bm25

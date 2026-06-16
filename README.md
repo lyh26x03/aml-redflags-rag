@@ -86,12 +86,16 @@ Mock mode remains the default and requires no API key. To use the optional
 Gemma live path, provide a Google AI Studio API key through `GEMINI_API_KEY`
 and explicitly select a Gemma model available to that key. Model availability
 can vary, so this repository does not hardcode a universal Gemma model ID.
+The live LLM timeout is configurable through `LLM_TIMEOUT_SECONDS` and
+defaults to `90` seconds to make local Gemma smoke testing less likely to
+fall back on slower responses.
 
 ```powershell
 Copy-Item .env.example .env
 # Edit .env:
 # LLM_MODE=gemma
 # MODEL_NAME=<your-available-gemma-model-id>
+# LLM_TIMEOUT_SECONDS=90
 # GEMINI_API_KEY=<your-google-ai-studio-key>
 
 .venv\Scripts\python.exe -m uvicorn api.main:app --reload

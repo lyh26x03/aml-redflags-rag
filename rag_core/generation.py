@@ -250,7 +250,7 @@ def call_llm(
     system_prompt: str,
     user_prompt: str,
     llm_config: Dict[str, str],
-    timeout: float = 30.0,
+    timeout: float = 90.0,
 ) -> Dict[str, Any]:
     """Call a supported live provider using plain HTTP."""
     provider = llm_config.get("provider", "")
@@ -312,6 +312,7 @@ def generate(
     model_name: str = "mock-local",
     gemini_api_key: str = "",
     groq_api_key: str = "",
+    llm_timeout_seconds: float = 90.0,
     gate_allowed: bool = True,
     gate_reason: Optional[str] = None,
 ) -> Dict[str, Any]:
@@ -361,6 +362,7 @@ def generate(
                 "llm_model_name": provider_model,
                 "api_key": api_key,
             },
+            timeout=llm_timeout_seconds,
         )
         normalized = _normalize_live_result(live, query, chunks)
         return {
