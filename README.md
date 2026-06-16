@@ -22,6 +22,7 @@ system, or a substitute for an AML investigator.
 | Rule-based Pre-LLM Gate | Implemented | TBML, sanctions, and tax-evasion scope refusals |
 | Deterministic mock generation | Implemented | Default; no keys or network calls |
 | Groq / Gemini / Gemma REST generation | Experimental | Key-gated; failures fall back to mock |
+| Ollama local generation mode | Optional | Local HTTP path; failures fall back to mock |
 | Semantic scope classifier | Experimental | Off by default; enable with `ENABLE_SEMANTIC_GATE=true` |
 | Included knowledge corpus | Implemented | Default 12-chunk demo sample plus optional public 226-chunk profile |
 | Offline private-PDF indexing | Implemented, operator-run | Requires full profile and private PDFs |
@@ -138,6 +139,48 @@ Gemma uses the existing Google Generative Language API `generateContent` path.
 Its live responses are still normalized against retrieved evidence, and
 provider errors or malformed responses fall back to mock with debug details.
 Automated tests use mocked provider responses and do not require a real key.
+
+## Optional Ollama Local Mode
+
+Mock mode remains the default and the Ollama path is for local verification
+only. It is not a model-quality benchmark, and it still normalizes the output
+against retrieved evidence before returning a response.
+
+This path uses the local Ollama HTTP server directly. Run Ollama outside this
+repository, pull the model you want to test, and point the service at it with
+`OLLAMA_BASE_URL` and `OLLAMA_MODEL`.
+
+```powershell
+# Install and start Ollama outside this repo.
+# Download the Ollama installer from https://ollama.com/download and launch it.
+
+ollama pull llama3.1:8b
+
+Copy-Item .env.example .env
+# Edit .env:
+# LLM_MODE=ollama
+# OLLAMA_BASE_URL=http://localhost:11434
+# OLLAMA_MODEL=llama3.1:8b
+
+.venv\Scripts\python.exe -m uvicorn api.main:app --reload
+```
+
+Optional manual local smoke request:
+
+```powershell
+$body = @{
+  query = "Funds show rapid movement through a virtual asset exchange."
+  retrieval_mode = "hybrid"
+  llm_mode = "ollama"
+  include_debug = $true
+} | ConvertTo-Json
+
+Invoke-RestMethod -Uri http://localhost:8000/query `
+  -Method Post -ContentType "application/json" -Body $body
+```
+
+If Ollama is unavailable, times out, or returns malformed JSON, the service
+falls back to mock and records the reason in `debug`.
 
 ## Quick Start: Docker Compose
 

@@ -45,6 +45,10 @@ class _FakeResponse:
         return self.payload
 
 
+def _ollama_payload(result):
+    return {"response": json.dumps(result), "done": True}
+
+
 def _google_payload(result):
     return {
         "candidates": [
@@ -61,6 +65,12 @@ def test_query_request_accepts_gemma_mode():
     request = QueryRequest(query=QUERY, llm_mode="gemma")
 
     assert request.llm_mode == "gemma"
+
+
+def test_query_request_accepts_ollama_mode():
+    request = QueryRequest(query=QUERY, llm_mode="ollama")
+
+    assert request.llm_mode == "ollama"
 
 
 def test_mock_generate_derives_chunk_flags_when_related_flags_are_absent():
@@ -213,6 +223,7 @@ def test_generate_passes_configured_timeout_to_call_llm(monkeypatch):
                 "provider": "gemma",
                 "llm_model_name": "some-gemma-model",
                 "api_key": "fake",
+                "ollama_base_url": "http://localhost:11434",
             },
             "timeout": 123.0,
         }
@@ -280,6 +291,146 @@ def test_gemma_malformed_google_response_falls_back_to_mock(monkeypatch):
     assert debug["fallback_reason"]
 
 
+def test_ollama_success_uses_local_generate_endpoint(monkeypatch):
+    live_result = {
+        "answer": "The evidence supports possible rapid movement.",
+        "assessment": "possible",
+        "identified_flags": [{"code": "RF-02"}, {"code": "RF-99"}],
+        "citations": [{"chunk_id": "invented"}],
+    }
+    calls = []
+
+    def fake_post(url, **kwargs):
+        calls.append((url, kwargs))
+        return _FakeResponse(_ollama_payload(live_result))
+
+    monkeypatch.setattr(generation.httpx, "post", fake_post)
+
+    result = generation.generate(
+        query=QUERY,
+        chunks=CHUNKS,
+        llm_mode="ollama",
+        model_name="mock-local",
+        ollama_model="llama3.1:8b",
+    )
+
+    assert calls[0][0] == "http://localhost:11434/api/generate"
+    assert calls[0][1]["json"] == {
+        "model": "llama3.1:8b",
+        "system": generation.SYSTEM_PROMPT,
+        "prompt": generation.build_user_prompt(QUERY, CHUNKS),
+        "stream": False,
+        "format": "json",
+        "options": {"temperature": 0.1},
+    }
+    assert result["assessment"] == "possible"
+    assert [citation["chunk_id"] for citation in result["citations"]] == ["chunk-rf02"]
+    assert result["_generation_debug"] == {
+        "requested_llm_mode": "ollama",
+        "effective_llm_mode": "ollama",
+        "llm_model_name": "llama3.1:8b",
+        "fallback_used": False,
+        "fallback_reason": None,
+        "error_type": None,
+        "http_status": None,
+    }
+    assert result["parse_success"] is True
+
+
+def test_ollama_malformed_json_falls_back_to_mock(monkeypatch):
+    monkeypatch.setattr(
+        generation.httpx,
+        "post",
+        lambda *args, **kwargs: _FakeResponse({"response": "{not valid json"}),
+    )
+
+    result = generation.generate(
+        query=QUERY,
+        chunks=CHUNKS,
+        llm_mode="ollama",
+        model_name="mock-local",
+        ollama_model="llama3.1:8b",
+    )
+
+    debug = result["_generation_debug"]
+    assert debug["effective_llm_mode"] == "mock"
+    assert debug["fallback_used"] is True
+    assert debug["error_type"] == "parse_error"
+    assert result["parse_success"] is False
+    assert debug["fallback_reason"]
+
+
+def test_ollama_connection_error_falls_back_to_mock_with_sanitized_debug(monkeypatch):
+    request = httpx.Request(
+        "POST",
+        "http://localhost:11434/api/generate?token=SECRET123",
+    )
+
+    def fake_post(url, **kwargs):
+        raise httpx.ConnectError(
+            "Connection failed for http://localhost:11434/api/generate?token=SECRET123",
+            request=request,
+        )
+
+    monkeypatch.setattr(generation.httpx, "post", fake_post)
+
+    result = generation.generate(
+        query=QUERY,
+        chunks=CHUNKS,
+        llm_mode="ollama",
+        model_name="mock-local",
+        ollama_model="llama3.1:8b",
+    )
+
+    debug = result["_generation_debug"]
+    assert debug["effective_llm_mode"] == "mock"
+    assert debug["fallback_used"] is True
+    assert debug["error_type"] == "request_error"
+    assert result["parse_success"] is None
+    assert "SECRET123" not in debug["fallback_reason"]
+    assert "provider=ollama" in debug["fallback_reason"]
+    assert "model=llama3.1:8b" in debug["fallback_reason"]
+
+
+def test_ollama_http_error_falls_back_to_mock_with_sanitized_debug(monkeypatch):
+    request = httpx.Request(
+        "POST",
+        "http://localhost:11434/api/generate?token=SECRET123",
+    )
+    response = httpx.Response(
+        404,
+        request=request,
+        json={"error": {"message": "model not found: llama3.1:8b"}},
+    )
+
+    class _ErrorResponse(_FakeResponse):
+        def raise_for_status(self):
+            raise httpx.HTTPStatusError("Not Found", request=request, response=response)
+
+    monkeypatch.setattr(
+        generation.httpx,
+        "post",
+        lambda *args, **kwargs: _ErrorResponse({"response": json.dumps({})}),
+    )
+
+    result = generation.generate(
+        query=QUERY,
+        chunks=CHUNKS,
+        llm_mode="ollama",
+        model_name="mock-local",
+        ollama_model="llama3.1:8b",
+    )
+
+    debug = result["_generation_debug"]
+    assert debug["effective_llm_mode"] == "mock"
+    assert debug["fallback_used"] is True
+    assert debug["error_type"] == "http_error"
+    assert debug["http_status"] == 404
+    assert "SECRET123" not in debug["fallback_reason"]
+    assert "provider=ollama" in debug["fallback_reason"]
+    assert "model=llama3.1:8b" in debug["fallback_reason"]
+
+
 def test_unsupported_provider_falls_back_to_mock():
     result = generation.generate(
         query=QUERY,
@@ -317,3 +468,12 @@ def test_settings_exposes_llm_timeout_seconds(monkeypatch):
     settings = Settings()
 
     assert settings.llm_timeout_seconds == 120.0
+
+
+def test_settings_exposes_ollama_defaults(monkeypatch):
+    monkeypatch.setenv("OLLAMA_BASE_URL", "http://localhost:11435")
+    monkeypatch.setenv("OLLAMA_MODEL", "llama3.2:1b")
+    settings = Settings()
+
+    assert settings.ollama_base_url == "http://localhost:11435"
+    assert settings.ollama_model == "llama3.2:1b"
