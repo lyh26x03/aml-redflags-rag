@@ -9,12 +9,15 @@ from fastapi.responses import JSONResponse
 from rag_core.config import Settings, get_settings
 from rag_core.gate import SemanticScopeClassifier
 from rag_core.loaders import ArtifactState, MISSING_ARTIFACTS_MESSAGE, load_artifacts
+from rag_core.memory import ConversationMemoryStore
 from rag_core.pipeline import RAGPipeline
 from rag_core.retrieval import Retriever
 from rag_core.schemas import (
     HealthResponse,
+    MemoryDeleteResponse,
     QueryRequest,
     QueryResponse,
+    SessionMemoryResponse,
     SourcesResponse,
 )
 
@@ -33,6 +36,11 @@ def create_app(
         )
         application.state.artifacts = artifacts
         application.state.pipeline = None
+        # The conversation memory store is independent of retrieval artifacts,
+        # so it exists even when the service starts in degraded mode. It is
+        # local, in-process, and bounded — not a persistent memory service.
+        memory_store = ConversationMemoryStore()
+        application.state.memory_store = memory_store
         if artifacts.loaded:
             retriever = Retriever(
                 artifacts,
@@ -45,6 +53,7 @@ def create_app(
                 settings=configured,
                 retriever=retriever,
                 scope_classifier=scope_classifier,
+                memory_store=memory_store,
             )
         yield
 
@@ -96,6 +105,42 @@ def create_app(
             source_names=artifacts.source_names,
             sources=artifacts.source_summaries,
             message=None if artifacts.loaded else artifacts.message,
+        )
+
+    @application.get(
+        "/sessions/{session_id}/memory", response_model=SessionMemoryResponse
+    )
+    def get_session_memory(session_id: str):
+        """Inspect a session's bounded structured memory (demo/debug only)."""
+        store: ConversationMemoryStore = application.state.memory_store
+        snapshot = store.snapshot(session_id)
+        if snapshot is None:
+            return JSONResponse(
+                status_code=404,
+                content={
+                    "error": "SESSION_NOT_FOUND",
+                    "message": (
+                        f"No conversation memory found for session '{session_id}'."
+                    ),
+                },
+            )
+        return SessionMemoryResponse(**snapshot)
+
+    @application.delete(
+        "/sessions/{session_id}/memory", response_model=MemoryDeleteResponse
+    )
+    def delete_session_memory(session_id: str) -> MemoryDeleteResponse:
+        """Clear a session's structured memory."""
+        store: ConversationMemoryStore = application.state.memory_store
+        deleted = store.reset(session_id)
+        return MemoryDeleteResponse(
+            session_id=session_id,
+            deleted=deleted,
+            message=(
+                "Session memory cleared."
+                if deleted
+                else "No memory existed for this session."
+            ),
         )
 
     return application
