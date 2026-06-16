@@ -125,9 +125,11 @@ def test_query_happy_path_and_fallback_labeling():
             "identified_flags",
             "citations",
             "refusal",
+            "parse_success",
             "debug",
         }
         assert body["assessment"] == "possible"
+        assert body["parse_success"] is None
         assert body["citations"]
         assert body["refusal"]["refused"] is False
         assert body["debug"]["requested_mode"] == "hybrid"

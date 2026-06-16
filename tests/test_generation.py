@@ -2,6 +2,9 @@
 
 import json
 
+import httpx
+
+from rag_core.error_sanitization import sanitize_error_message
 from rag_core import generation
 from rag_core.config import Settings
 from rag_core.schemas import QueryRequest
@@ -82,6 +85,25 @@ def test_chunk_flags_keep_existing_related_flags_behavior():
     assert generation._chunk_flags(chunk) == {"RF-04"}
 
 
+def test_sanitize_error_message_redacts_query_api_key():
+    sanitized = sanitize_error_message(
+        "Provider failed at "
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini:generateContent?key=SECRET123&alt=json"
+    )
+
+    assert sanitized is not None
+    assert "SECRET123" not in sanitized
+    assert "key=[redacted]" in sanitized
+
+
+def test_sanitize_error_message_redacts_bearer_token():
+    sanitized = sanitize_error_message(
+        "Authorization: Bearer secret-token-value-123"
+    )
+
+    assert sanitized == "Authorization: Bearer [redacted]"
+
+
 def test_gemma_missing_key_falls_back_to_mock():
     result = generation.generate(
         query=QUERY,
@@ -94,6 +116,7 @@ def test_gemma_missing_key_falls_back_to_mock():
     debug = result["_generation_debug"]
     assert debug["effective_llm_mode"] == "mock"
     assert debug["fallback_used"] is True
+    assert debug["error_type"] == "missing_key"
     assert "API key is missing" in debug["fallback_reason"]
 
 
@@ -109,9 +132,8 @@ def test_gemma_missing_model_falls_back_to_mock():
     debug = result["_generation_debug"]
     assert debug["effective_llm_mode"] == "mock"
     assert debug["fallback_used"] is True
-    assert "MODEL_NAME must be set to an available Gemma model ID" in debug[
-        "fallback_reason"
-    ]
+    assert debug["error_type"] == "invalid_model_config"
+    assert "MODEL_NAME must be set to an available Gemma model ID" in debug["fallback_reason"]
 
 
 def test_gemma_success_uses_google_generate_content(monkeypatch):
@@ -144,9 +166,13 @@ def test_gemma_success_uses_google_generate_content(monkeypatch):
     assert result["_generation_debug"] == {
         "requested_llm_mode": "gemma",
         "effective_llm_mode": "gemma",
+        "llm_model_name": "some-gemma-model",
         "fallback_used": False,
         "fallback_reason": None,
+        "error_type": None,
+        "http_status": None,
     }
+    assert result["parse_success"] is True
 
 
 def test_generate_passes_configured_timeout_to_call_llm(monkeypatch):
@@ -194,6 +220,43 @@ def test_generate_passes_configured_timeout_to_call_llm(monkeypatch):
     assert result["_generation_debug"]["effective_llm_mode"] == "gemma"
 
 
+def test_http_provider_fallback_reason_does_not_leak_raw_api_key(monkeypatch):
+    request = httpx.Request(
+        "POST",
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=SECRET123",
+    )
+    response = httpx.Response(
+        403,
+        request=request,
+        json={"error": {"message": "API key rejected"}},
+    )
+
+    def fake_call_llm(*args, **kwargs):
+        raise httpx.HTTPStatusError(
+            "Client error",
+            request=request,
+            response=response,
+        )
+
+    monkeypatch.setattr(generation, "call_llm", fake_call_llm)
+
+    result = generation.generate(
+        query=QUERY,
+        chunks=CHUNKS,
+        llm_mode="gemini",
+        model_name="gemini-2.0-flash",
+        gemini_api_key="fake",
+    )
+
+    debug = result["_generation_debug"]
+    assert debug["fallback_used"] is True
+    assert debug["error_type"] == "http_error"
+    assert debug["http_status"] == 403
+    assert "SECRET123" not in debug["fallback_reason"]
+    assert "provider=gemini" in debug["fallback_reason"]
+    assert "model=gemini-2.0-flash" in debug["fallback_reason"]
+
+
 def test_gemma_malformed_google_response_falls_back_to_mock(monkeypatch):
     monkeypatch.setattr(
         generation.httpx,
@@ -212,6 +275,8 @@ def test_gemma_malformed_google_response_falls_back_to_mock(monkeypatch):
     debug = result["_generation_debug"]
     assert debug["effective_llm_mode"] == "mock"
     assert debug["fallback_used"] is True
+    assert debug["error_type"] == "parse_error"
+    assert result["parse_success"] is False
     assert debug["fallback_reason"]
 
 
@@ -227,7 +292,8 @@ def test_unsupported_provider_falls_back_to_mock():
     debug = result["_generation_debug"]
     assert debug["effective_llm_mode"] == "mock"
     assert debug["fallback_used"] is True
-    assert debug["fallback_reason"] == "Unsupported LLM provider: unsupported"
+    assert debug["error_type"] == "unsupported_provider"
+    assert "Unsupported LLM provider: unsupported" in debug["fallback_reason"]
 
 
 def test_mock_mode_remains_deterministic_and_does_not_fallback(monkeypatch):
@@ -242,6 +308,7 @@ def test_mock_mode_remains_deterministic_and_does_not_fallback(monkeypatch):
 
     assert first == second
     assert first["assessment"] == "possible"
+    assert first["parse_success"] is None
     assert first["_generation_debug"]["fallback_used"] is False
 
 

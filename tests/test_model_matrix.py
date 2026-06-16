@@ -25,6 +25,7 @@ def _record(mode, status, latency_ms, fallback_used=False, **overrides):
         "parse_success": None,
         "model": None,
         "provider": mode,
+        "provider_http_status": None,
         "corpus_profile": "public_226",
         "total_chunks": 226,
         "error_type": None,
@@ -94,8 +95,62 @@ def test_markdown_renderer_includes_required_sections_and_note():
     assert "- **Total chunks:** 226" in report
     assert "## Summary By Mode" in report
     assert "## Per-Query Comparison" in report
+    assert "Error type | Parse success" in report
     assert "provider/mode behavior smoke matrix" in report
     assert "Mock mode is deterministic" in report
+
+
+def test_evaluate_query_mode_sanitizes_debug_fallback_reason_and_markdown(monkeypatch):
+    response_body = {
+        "assessment": "unlikely",
+        "identified_flags": [],
+        "citations": [],
+        "parse_success": False,
+        "debug": {
+            "fallback_used": True,
+            "fallback_reason": (
+                "provider=gemini model=gemini-2.0-flash error_type=http_error "
+                "message=https://generativelanguage.googleapis.com/v1beta/models/"
+                "gemini-2.0-flash:generateContent?key=SECRET123"
+            ),
+            "error_type": "http_error",
+            "http_status": 403,
+            "llm_model_name": "gemini-2.0-flash",
+            "retrieved_chunk_ids": ["chunk-1"],
+        },
+    }
+
+    monkeypatch.setattr(
+        run_model_matrix,
+        "fetch_json",
+        lambda *args, **kwargs: (200, response_body),
+    )
+
+    record = run_model_matrix.evaluate_query_mode(
+        "matrix-1",
+        "2026-06-16T00:00:00+00:00",
+        "http://localhost:8000",
+        "gemini",
+        {"query_id": "case-1", "query": "Example query"},
+        30.0,
+        {"corpus_profile": "public_226", "total_chunks": 226},
+    )
+    report = run_model_matrix.render_markdown_report(
+        [record],
+        run_id="matrix-1",
+        timestamp_utc="2026-06-16T00:00:00+00:00",
+        base_url="http://localhost:8000",
+        requested_modes=["gemini"],
+        metadata={"corpus_profile": "public_226", "total_chunks": 226},
+    )
+
+    assert record["fallback_reason"] is not None
+    assert "SECRET123" not in record["fallback_reason"]
+    assert record["error_type"] == "http_error"
+    assert record["parse_success"] is False
+    assert record["provider_http_status"] == 403
+    assert record["model"] == "gemini-2.0-flash"
+    assert "SECRET123" not in report
 
 
 def test_unsupported_mode_helper_detects_llm_mode_validation_error():

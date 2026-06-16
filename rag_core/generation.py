@@ -20,6 +20,10 @@ from typing import Any, Dict, List, Optional, Set
 
 import httpx
 
+from rag_core.error_sanitization import (
+    build_provider_error_details,
+    describe_provider_error,
+)
 from rag_core.gate import TopicDetector
 
 
@@ -418,11 +422,15 @@ def generate(
     if llm_mode == "mock" or not gate_allowed:
         return {
             **mock,
+            "parse_success": None,
             "_generation_debug": {
                 "requested_llm_mode": llm_mode,
                 "effective_llm_mode": "mock",
+                "llm_model_name": None,
                 "fallback_used": False,
                 "fallback_reason": None,
+                "error_type": None,
+                "http_status": None,
             },
         }
 
@@ -431,17 +439,27 @@ def generate(
     if llm_mode == "gemma" and (
         not provider_model or provider_model == "mock-local"
     ):
+        error = build_provider_error_details(
+            llm_mode,
+            provider_model or "",
+            error_type="invalid_model_config",
+            message=(
+                "MODEL_NAME must be set to an available Gemma model ID for "
+                "llm_mode=gemma. Check Google AI Studio / Gemini API model "
+                "availability."
+            ),
+        )
         return {
             **mock,
+            "parse_success": None,
             "_generation_debug": {
                 "requested_llm_mode": llm_mode,
                 "effective_llm_mode": "mock",
+                "llm_model_name": provider_model or None,
                 "fallback_used": True,
-                "fallback_reason": (
-                    "MODEL_NAME must be set to an available Gemma model ID for "
-                    "llm_mode=gemma. Check Google AI Studio / Gemini API model "
-                    "availability."
-                ),
+                "fallback_reason": error.fallback_reason,
+                "error_type": error.error_type,
+                "http_status": error.http_status,
             },
         }
     if not provider_model or provider_model == "mock-local":
@@ -464,20 +482,33 @@ def generate(
         normalized = _normalize_live_result(live, query, chunks)
         return {
             **normalized,
+            "parse_success": True,
             "_generation_debug": {
                 "requested_llm_mode": llm_mode,
                 "effective_llm_mode": llm_mode,
+                "llm_model_name": provider_model,
                 "fallback_used": False,
                 "fallback_reason": None,
+                "error_type": None,
+                "http_status": None,
             },
         }
     except Exception as exc:
+        error = describe_provider_error(
+            exc,
+            provider=llm_mode,
+            model_name=provider_model,
+        )
         return {
             **mock,
+            "parse_success": error.parse_success,
             "_generation_debug": {
                 "requested_llm_mode": llm_mode,
                 "effective_llm_mode": "mock",
+                "llm_model_name": provider_model,
                 "fallback_used": True,
-                "fallback_reason": str(exc),
+                "fallback_reason": error.fallback_reason,
+                "error_type": error.error_type,
+                "http_status": error.http_status,
             },
         }

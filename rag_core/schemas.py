@@ -52,7 +52,11 @@ class RetrievalDebug(BaseModel):
     fallback_used: bool
     retrieved_chunk_ids: List[str]
     requested_mode: Optional[str] = None
+    llm_model_name: Optional[str] = None
     fallback_reason: Optional[str] = None
+    error_type: Optional[str] = None
+    http_status: Optional[int] = None
+    parse_success: Optional[bool] = None
 
 
 class QueryResponse(BaseModel):
@@ -61,6 +65,7 @@ class QueryResponse(BaseModel):
     identified_flags: List[IdentifiedFlag] = Field(default_factory=list)
     citations: List[Citation] = Field(default_factory=list)
     refusal: RefusalInfo = Field(default_factory=RefusalInfo)
+    parse_success: Optional[bool] = None
     debug: Optional[RetrievalDebug] = None
 
 

@@ -11,6 +11,8 @@ from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
+from rag_core.error_sanitization import sanitize_error_message
+
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_QUERIES = REPO_ROOT / "eval" / "queries" / "model_matrix_queries_6.json"
@@ -175,17 +177,6 @@ def fetch_service_metadata(base_url: str, timeout: float) -> dict[str, Any]:
     return metadata
 
 
-def sanitize_error_message(message: Any, max_length: int = 240) -> str | None:
-    if message is None:
-        return None
-    text = " ".join(str(message).split())
-    if not text:
-        return None
-    if len(text) <= max_length:
-        return text
-    return text[: max_length - 3].rstrip() + "..."
-
-
 def _detail_message(body: Any) -> str | None:
     if not isinstance(body, dict):
         return sanitize_error_message(body)
@@ -291,6 +282,19 @@ def evaluate_query_mode(
     debug = response.get("debug") if isinstance(response.get("debug"), dict) else {}
     fallback_used = debug.get("fallback_used") is True
     fallback_reason = sanitize_error_message(debug.get("fallback_reason"))
+    debug_error_type = (
+        debug.get("error_type") if isinstance(debug.get("error_type"), str) else None
+    )
+    debug_http_status = (
+        debug.get("http_status") if isinstance(debug.get("http_status"), int) else None
+    )
+    parse_success = response.get("parse_success")
+    if not isinstance(parse_success, bool):
+        parse_success = (
+            debug.get("parse_success")
+            if isinstance(debug.get("parse_success"), bool)
+            else None
+        )
 
     return {
         "run_id": run_id,
@@ -309,14 +313,15 @@ def evaluate_query_mode(
         "retrieved_chunk_ids": _string_values(debug.get("retrieved_chunk_ids")),
         "fallback_used": fallback_used,
         "fallback_reason": fallback_reason,
-        "parse_success": response.get("parse_success")
-        if isinstance(response.get("parse_success"), bool)
+        "parse_success": parse_success,
+        "model": debug.get("llm_model_name")
+        if isinstance(debug.get("llm_model_name"), str)
         else None,
-        "model": None,
-        "provider": debug.get("llm_mode") if isinstance(debug.get("llm_mode"), str) else mode,
+        "provider": mode,
+        "provider_http_status": debug_http_status,
         "corpus_profile": metadata.get("corpus_profile"),
         "total_chunks": metadata.get("total_chunks"),
-        "error_type": error_type,
+        "error_type": debug_error_type or error_type,
         "error_message": error_message,
     }
 
@@ -406,17 +411,23 @@ def render_markdown_report(
             "",
             "## Per-Query Comparison",
             "",
-            "| Query ID | Mode | Status | Assessment | Flags | Citation count | Fallback used |",
-            "|---|---|---|---|---|---:|---|",
+            "| Query ID | Mode | Status | Assessment | Flags | Citation count | Fallback used | Error type | Parse success |",
+            "|---|---|---|---|---|---:|---|---|---|",
         ]
     )
     for record in records:
         flags = ", ".join(record["identified_flag_codes"]) or "-"
         assessment = record["assessment"] or "-"
+        parse_success = (
+            str(record["parse_success"]).lower()
+            if isinstance(record.get("parse_success"), bool)
+            else "-"
+        )
         lines.append(
             f"| `{record['query_id']}` | `{record['llm_mode']}` | {record['status']} | "
             f"{assessment} | {flags} | {record['citation_count']} | "
-            f"{str(record['fallback_used']).lower()} |"
+            f"{str(record['fallback_used']).lower()} | "
+            f"{record.get('error_type') or '-'} | {parse_success} |"
         )
 
     lines.extend(["", "## Interpretation Note", ""])
