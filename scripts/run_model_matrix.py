@@ -11,10 +11,12 @@ from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
 from rag_core.error_sanitization import sanitize_error_message
 
-
-REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_QUERIES = REPO_ROOT / "eval" / "queries" / "model_matrix_queries_6.json"
 DEFAULT_OUTPUT_JSONL = REPO_ROOT / "eval" / "results" / "model_matrix_latest.jsonl"
 DEFAULT_OUTPUT_MD = REPO_ROOT / "eval" / "reports" / "model_matrix_latest.md"
@@ -159,6 +161,8 @@ def fetch_service_metadata(base_url: str, timeout: float) -> dict[str, Any]:
         "sources": None,
         "corpus_profile": None,
         "total_chunks": None,
+        "service_llm_mode": None,
+        "configured_service_model": None,
     }
     for path, key in (("/health", "health"), ("/sources", "sources")):
         try:
@@ -174,6 +178,12 @@ def fetch_service_metadata(base_url: str, timeout: float) -> dict[str, Any]:
         sources.get("corpus_profile") or health.get("corpus_profile")
     )
     metadata["total_chunks"] = sources.get("total_chunks") or health.get("chunk_count")
+    metadata["service_llm_mode"] = (
+        health.get("llm_mode") if isinstance(health.get("llm_mode"), str) else None
+    )
+    metadata["configured_service_model"] = (
+        health.get("model_name") if isinstance(health.get("model_name"), str) else None
+    )
     return metadata
 
 
@@ -321,6 +331,8 @@ def evaluate_query_mode(
         "provider_http_status": debug_http_status,
         "corpus_profile": metadata.get("corpus_profile"),
         "total_chunks": metadata.get("total_chunks"),
+        "service_llm_mode": metadata.get("service_llm_mode"),
+        "configured_service_model": metadata.get("configured_service_model"),
         "error_type": debug_error_type or error_type,
         "error_message": error_message,
     }
@@ -379,6 +391,8 @@ def render_markdown_report(
         f"- **Timestamp UTC:** {timestamp_utc}",
         f"- **Base URL:** `{base_url}`",
         f"- **Modes requested:** {', '.join(requested_modes)}",
+        f"- **Service llm_mode:** {metadata.get('service_llm_mode') or 'unavailable'}",
+        f"- **Configured service model:** {metadata.get('configured_service_model') or 'unavailable'}",
         f"- **Corpus profile:** {metadata.get('corpus_profile') or 'unavailable'}",
         f"- **Total chunks:** {metadata.get('total_chunks') if metadata.get('total_chunks') is not None else 'unavailable'}",
     ]

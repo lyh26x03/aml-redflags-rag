@@ -62,6 +62,7 @@ def create_app(
             corpus_profile=artifacts.corpus_profile,
             artifacts_loaded=artifacts.loaded,
             llm_mode=configured.llm_mode,
+            model_name=configured.model_name,
             index_version=artifacts.index_version,
             chunk_count=len(artifacts.chunks),
             source_count=len(artifacts.source_summaries),

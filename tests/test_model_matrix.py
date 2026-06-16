@@ -1,9 +1,15 @@
 """Tests for the provider/mode matrix runner."""
 
 import json
+import subprocess
+import sys
 from datetime import datetime, timezone
+from pathlib import Path
 
 from scripts import run_model_matrix
+
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 def _record(mode, status, latency_ms, fallback_used=False, **overrides):
@@ -28,6 +34,8 @@ def _record(mode, status, latency_ms, fallback_used=False, **overrides):
         "provider_http_status": None,
         "corpus_profile": "public_226",
         "total_chunks": 226,
+        "service_llm_mode": "gemini",
+        "configured_service_model": "gemma-4-26b-a4b-it",
         "error_type": None,
         "error_message": None,
     }
@@ -41,6 +49,20 @@ def test_parse_args_defaults_to_mock_only():
     assert args.modes == "mock"
     assert args.save_snapshot is False
     assert run_model_matrix.parse_modes(args.modes) == ["mock"]
+
+
+def test_cli_script_executes_by_path_without_pythonpath():
+    result = subprocess.run(
+        [sys.executable, str(REPO_ROOT / "scripts" / "run_model_matrix.py"), "--help"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert "ModuleNotFoundError" not in result.stderr
+    assert "Run provider/mode matrix checks against a running FastAPI service." in result.stdout
 
 
 def test_summarize_results_counts_statuses_and_latency():
@@ -83,13 +105,20 @@ def test_markdown_renderer_includes_required_sections_and_note():
         timestamp_utc="2026-06-16T00:00:00+00:00",
         base_url="http://localhost:8000",
         requested_modes=["mock"],
-        metadata={"corpus_profile": "public_226", "total_chunks": 226},
+        metadata={
+            "corpus_profile": "public_226",
+            "total_chunks": 226,
+            "service_llm_mode": "gemini",
+            "configured_service_model": "gemma-4-26b-a4b-it",
+        },
         corpus_label="public_226",
     )
 
     assert report.startswith("# Model Matrix Runner Report\n")
     assert "- **Run ID:** `matrix-1`" in report
     assert "- **Modes requested:** mock" in report
+    assert "- **Service llm_mode:** gemini" in report
+    assert "- **Configured service model:** gemma-4-26b-a4b-it" in report
     assert "- **Corpus profile:** public_226" in report
     assert "- **Corpus label:** public_226" in report
     assert "- **Total chunks:** 226" in report
@@ -133,7 +162,12 @@ def test_evaluate_query_mode_sanitizes_debug_fallback_reason_and_markdown(monkey
         "gemini",
         {"query_id": "case-1", "query": "Example query"},
         30.0,
-        {"corpus_profile": "public_226", "total_chunks": 226},
+        {
+            "corpus_profile": "public_226",
+            "total_chunks": 226,
+            "service_llm_mode": "gemini",
+            "configured_service_model": "gemma-4-26b-a4b-it",
+        },
     )
     report = run_model_matrix.render_markdown_report(
         [record],
@@ -141,7 +175,12 @@ def test_evaluate_query_mode_sanitizes_debug_fallback_reason_and_markdown(monkey
         timestamp_utc="2026-06-16T00:00:00+00:00",
         base_url="http://localhost:8000",
         requested_modes=["gemini"],
-        metadata={"corpus_profile": "public_226", "total_chunks": 226},
+        metadata={
+            "corpus_profile": "public_226",
+            "total_chunks": 226,
+            "service_llm_mode": "gemini",
+            "configured_service_model": "gemma-4-26b-a4b-it",
+        },
     )
 
     assert record["fallback_reason"] is not None
@@ -150,7 +189,38 @@ def test_evaluate_query_mode_sanitizes_debug_fallback_reason_and_markdown(monkey
     assert record["parse_success"] is False
     assert record["provider_http_status"] == 403
     assert record["model"] == "gemini-2.0-flash"
+    assert record["service_llm_mode"] == "gemini"
+    assert record["configured_service_model"] == "gemma-4-26b-a4b-it"
     assert "SECRET123" not in report
+
+
+def test_fetch_service_metadata_includes_service_configuration(monkeypatch):
+    responses = {
+        "/health": (
+            200,
+            {
+                "status": "ok",
+                "corpus_profile": "public_226",
+                "llm_mode": "gemini",
+                "model_name": "gemma-4-26b-a4b-it",
+                "chunk_count": 226,
+            },
+        ),
+        "/sources": (200, {"corpus_profile": "public_226", "total_chunks": 226}),
+    }
+
+    monkeypatch.setattr(
+        run_model_matrix,
+        "fetch_json",
+        lambda base_url, path, timeout, payload=None: responses[path],
+    )
+
+    metadata = run_model_matrix.fetch_service_metadata("http://localhost:8000", 30.0)
+
+    assert metadata["corpus_profile"] == "public_226"
+    assert metadata["total_chunks"] == 226
+    assert metadata["service_llm_mode"] == "gemini"
+    assert metadata["configured_service_model"] == "gemma-4-26b-a4b-it"
 
 
 def test_unsupported_mode_helper_detects_llm_mode_validation_error():
@@ -245,7 +315,12 @@ def test_main_writes_latest_outputs_without_snapshot(tmp_path, monkeypatch):
     monkeypatch.setattr(
         run_model_matrix,
         "fetch_service_metadata",
-        lambda *args, **kwargs: {"corpus_profile": "public_226", "total_chunks": 226},
+        lambda *args, **kwargs: {
+            "corpus_profile": "public_226",
+            "total_chunks": 226,
+            "service_llm_mode": "mock",
+            "configured_service_model": "mock-local",
+        },
     )
     monkeypatch.setattr(
         run_model_matrix,
@@ -293,7 +368,12 @@ def test_main_with_save_snapshot_writes_archive_copy(tmp_path, monkeypatch):
     monkeypatch.setattr(
         run_model_matrix,
         "fetch_service_metadata",
-        lambda *args, **kwargs: {"corpus_profile": "public_226", "total_chunks": 226},
+        lambda *args, **kwargs: {
+            "corpus_profile": "public_226",
+            "total_chunks": 226,
+            "service_llm_mode": "mock",
+            "configured_service_model": "mock-local",
+        },
     )
     monkeypatch.setattr(
         run_model_matrix,

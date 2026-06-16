@@ -75,6 +75,7 @@ class HealthResponse(BaseModel):
     corpus_profile: str = "sample"
     artifacts_loaded: bool
     llm_mode: str
+    model_name: str
     index_version: Optional[str] = None
     chunk_count: int = 0
     source_count: int = 0

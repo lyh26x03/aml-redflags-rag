@@ -17,6 +17,7 @@ def _client(artifact_dir: Path = ARTIFACT_DIR, **settings_overrides):
     settings = Settings(
         artifact_dir=str(artifact_dir),
         llm_mode="mock",
+        model_name="mock-local",
         enable_debug=True,
         **settings_overrides,
     )
@@ -26,12 +27,16 @@ def _client(artifact_dir: Path = ARTIFACT_DIR, **settings_overrides):
 def test_health_and_sources():
     with _client() as client:
         health = client.get("/health")
+        body = health.json()
         assert health.status_code == 200
-        assert health.json()["status"] == "ok"
-        assert health.json()["corpus_profile"] == "sample"
-        assert health.json()["artifacts_loaded"] is True
-        assert health.json()["chunk_count"] == 12
-        assert health.json()["source_count"] == 3
+        assert body["status"] == "ok"
+        assert body["service"] == "aml-redflags-rag-api"
+        assert body["corpus_profile"] == "sample"
+        assert body["artifacts_loaded"] is True
+        assert body["llm_mode"] == "mock"
+        assert body["model_name"] == "mock-local"
+        assert body["chunk_count"] == 12
+        assert body["source_count"] == 3
 
         sources = client.get("/sources")
         assert sources.status_code == 200
@@ -50,13 +55,16 @@ def test_public_226_profile_loads_and_reports_sources():
         public_226_artifact_dir=str(PUBLIC_226_DIR),
     ) as client:
         health = client.get("/health")
+        body = health.json()
         assert health.status_code == 200
-        assert health.json()["status"] == "ok"
-        assert health.json()["corpus_profile"] == "public_226"
-        assert health.json()["index_version"] == "public-226-v2"
-        assert health.json()["chunk_count"] == 226
-        assert health.json()["source_count"] == 3
-        assert health.json()["source_names"] == [
+        assert body["status"] == "ok"
+        assert body["corpus_profile"] == "public_226"
+        assert body["llm_mode"] == "mock"
+        assert body["model_name"] == "mock-local"
+        assert body["index_version"] == "public-226-v2"
+        assert body["chunk_count"] == 226
+        assert body["source_count"] == 3
+        assert body["source_names"] == [
             "FATF Trade-Based Money Laundering Risk Indicators",
             "FATF Virtual Assets Red Flag Indicators",
             "Taiwan AML Training Slides",
@@ -180,9 +188,11 @@ def test_include_debug_defaults_to_true_when_setting_enabled():
 def test_missing_artifacts_degrade_without_crashing(tmp_path):
     with _client(tmp_path / "missing") as client:
         health = client.get("/health")
+        body = health.json()
         assert health.status_code == 200
-        assert health.json()["status"] == "degraded"
-        assert health.json()["artifacts_loaded"] is False
+        assert body["status"] == "degraded"
+        assert body["artifacts_loaded"] is False
+        assert body["model_name"] == "mock-local"
 
         query = client.post("/query", json={"query": "rapid movement"})
         assert query.status_code == 503
