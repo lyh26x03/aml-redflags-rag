@@ -17,6 +17,7 @@ migration_staging/
 data/raw/
 data/private/
 *.pdf
+!data/public_corpus_226/sources/*.pdf
 
 # temporary outputs
 *.log

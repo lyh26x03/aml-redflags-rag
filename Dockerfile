@@ -15,6 +15,7 @@ RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTr
 COPY api/ api/
 COPY rag_core/ rag_core/
 COPY artifacts/ artifacts/
+COPY data/public_corpus_226/ data/public_corpus_226/
 
 EXPOSE 8000
 

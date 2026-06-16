@@ -23,7 +23,7 @@ system, or a substitute for an AML investigator.
 | Deterministic mock generation | Implemented | Default; no keys or network calls |
 | Groq / Gemini / Gemma REST generation | Experimental | Key-gated; failures fall back to mock |
 | Semantic scope classifier | Experimental | Off by default; enable with `ENABLE_SEMANTIC_GATE=true` |
-| Included knowledge corpus | Demo sample only | 12 hand-written bilingual chunks, not FATF source text |
+| Included knowledge corpus | Implemented | Default 12-chunk demo sample plus optional public 226-chunk profile |
 | Offline private-PDF indexing | Implemented, operator-run | Requires full profile and private PDFs |
 | Multi-turn conversation / intent routing | Planned for service | Notebook-only; see `experiment_rag_v4_display.ipynb` |
 | Evaluation automation | Planned | Historical notebook results are documented below |
@@ -79,6 +79,29 @@ cp .env.example .env
 
 Open `http://localhost:8000/health`. Mock mode is the default and requires no
 API keys.
+
+## Corpus Profiles
+
+The service supports two committed corpus profiles:
+
+- `sample` (default): 12 small, hand-written bilingual demo chunks in
+  `artifacts/index`. This profile keeps startup fast and preserves the original
+  smoke-test behavior.
+- `public_226`: 226 chunks imported from public AML materials in
+  `data/public_corpus_226`, with the source PDFs committed under
+  `data/public_corpus_226/sources`.
+
+To run the API with the public profile:
+
+```powershell
+$env:CORPUS_PROFILE = "public_226"
+.venv\Scripts\python.exe -m uvicorn api.main:app --reload
+```
+
+The public profile uses `data/public_corpus_226/chunks.json` as canonical
+corpus content and `data/public_corpus_226/source_manifest.json` for source
+summaries. BM25 and optional dense FAISS indexes are rebuilt from `chunks.json`
+at startup; legacy notebook pickle/binary indexes are not required.
 
 ## Optional Live Gemma Mode Via Google AI Studio
 
@@ -263,10 +286,20 @@ The repository commits only:
 
 - `artifacts/index/chunks.json`: 12 small, hand-written demo chunks.
 - `artifacts/index/manifest.json`: demo provenance and source summaries.
+- `data/public_corpus_226/chunks.json`: 226 public AML chunks imported from the
+  legacy notebook handoff.
+- `data/public_corpus_226/source_manifest.json`: public corpus manifest derived
+  from the handoff metadata and chunk/source summaries.
+- `data/public_corpus_226/sources/*.pdf`: small public source PDFs for the
+  `public_226` profile.
 
-It does not include raw PDFs, private data, API keys, `.env`, pickle indexes,
-or large FAISS files. At service startup, BM25 and optional FAISS indexes are
+It does not include private raw PDFs, API keys, `.env`, pickle indexes, or
+large FAISS files. At service startup, BM25 and optional FAISS indexes are
 rebuilt in memory from the committed chunk text.
+
+See [`docs/legacy_notebook_artifacts.md`](docs/legacy_notebook_artifacts.md)
+for why the legacy FAISS/BM25/tokenized pickle artifacts are not runtime
+dependencies.
 
 To build artifacts from operator-supplied private PDFs:
 
@@ -282,9 +315,9 @@ These generated binary and pickle files are gitignored.
 
 ## Notebook Experiment Results
 
-The following are historical **v4 notebook experiment results on a private
-226-chunk corpus**. They are not benchmark claims for the 12-chunk API demo and
-are not re-run by the current test suite.
+The following are historical **v4 notebook experiment results on a 226-chunk
+corpus**. They are not benchmark claims for either service profile and are not
+re-run by the current test suite.
 
 | Retrieval strategy | P@3 | P@5 | Recall@5 | MRR |
 |---|---:|---:|---:|---:|
@@ -301,10 +334,9 @@ available in the display notebooks but are not part of the service API.
 ## Evaluation Evidence Chain
 
 The following artifacts make the historical benchmark traceable. They record
-results from the private 226-chunk corpus and are **not** reproducible against
-the 12-chunk demo corpus committed to this repository. Raw PDFs, binary FAISS
-indexes, BM25 pickles, and the full private corpus text are intentionally not
-committed.
+notebook-era results and are **not** automatically reproduced by the current
+service tests. Legacy binary FAISS indexes and BM25/tokenized pickles are
+intentionally not committed.
 
 | Artifact | Path | Contents |
 |---|---|---|
@@ -323,6 +355,7 @@ api/                    FastAPI application
 rag_core/               config, schemas, loader, retrieval, gate, generation, pipeline
 indexing/               offline private-PDF artifact builder
 artifacts/index/         committed sample chunks and manifest
+data/public_corpus_226/  committed public 226-chunk corpus profile and PDFs
 tests/                  API contract tests and HTTP smoke test
 docs/                   demo contract, migration notes, implementation plan
 notebooks_archive/       committed notebook migration sources
@@ -331,8 +364,8 @@ notebooks_archive/       committed notebook migration sources
 
 ## Known Limitations
 
-- The committed corpus is intentionally tiny and cannot represent production
-  AML coverage.
+- The default sample corpus is intentionally tiny, and the public 226-chunk
+  profile is still not production AML coverage.
 - Mock generation never emits `confirmed`; it returns `possible`, `unlikely`,
   or `refuse`.
 - Dense startup needs the model in cache or network access. If unavailable,

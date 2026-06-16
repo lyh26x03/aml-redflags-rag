@@ -67,9 +67,13 @@ class QueryResponse(BaseModel):
 class HealthResponse(BaseModel):
     status: Literal["ok", "degraded"]
     service: str = "aml-redflags-rag-api"
+    corpus_profile: str = "sample"
     artifacts_loaded: bool
     llm_mode: str
     index_version: Optional[str] = None
+    chunk_count: int = 0
+    source_count: int = 0
+    source_names: List[str] = Field(default_factory=list)
     message: Optional[str] = None
 
 
@@ -81,7 +85,11 @@ class SourceSummary(BaseModel):
 
 
 class SourcesResponse(BaseModel):
+    corpus_profile: str = "sample"
     index_version: Optional[str] = None
+    chunk_count: int = 0
     total_chunks: int = 0
+    source_count: int = 0
+    source_names: List[str] = Field(default_factory=list)
     sources: List[SourceSummary] = Field(default_factory=list)
     message: Optional[str] = None

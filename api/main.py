@@ -27,7 +27,10 @@ def create_app(
 
     @asynccontextmanager
     async def lifespan(application: FastAPI):
-        artifacts = load_artifacts(configured.artifact_dir)
+        artifacts = load_artifacts(
+            configured.resolved_artifact_dir,
+            corpus_profile=configured.corpus_profile,
+        )
         application.state.artifacts = artifacts
         application.state.pipeline = None
         if artifacts.loaded:
@@ -56,9 +59,13 @@ def create_app(
         artifacts: ArtifactState = application.state.artifacts
         return HealthResponse(
             status="ok" if artifacts.loaded else "degraded",
+            corpus_profile=artifacts.corpus_profile,
             artifacts_loaded=artifacts.loaded,
             llm_mode=configured.llm_mode,
             index_version=artifacts.index_version,
+            chunk_count=len(artifacts.chunks),
+            source_count=len(artifacts.source_summaries),
+            source_names=artifacts.source_names,
             message=None if artifacts.loaded else artifacts.message,
         )
 
@@ -79,11 +86,14 @@ def create_app(
     @application.get("/sources", response_model=SourcesResponse)
     def sources() -> SourcesResponse:
         artifacts: ArtifactState = application.state.artifacts
-        manifest = artifacts.manifest or {}
         return SourcesResponse(
+            corpus_profile=artifacts.corpus_profile,
             index_version=artifacts.index_version,
+            chunk_count=len(artifacts.chunks),
             total_chunks=len(artifacts.chunks),
-            sources=manifest.get("sources", []),
+            source_count=len(artifacts.source_summaries),
+            source_names=artifacts.source_names,
+            sources=artifacts.source_summaries,
             message=None if artifacts.loaded else artifacts.message,
         )
 
