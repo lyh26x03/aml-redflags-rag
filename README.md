@@ -25,20 +25,29 @@ system, or a substitute for an AML investigator.
 | Semantic scope classifier | Experimental | Off by default; enable with `ENABLE_SEMANTIC_GATE=true` |
 | Included knowledge corpus | Implemented | Default 12-chunk demo sample plus optional public 226-chunk profile |
 | Offline private-PDF indexing | Implemented, operator-run | Requires full profile and private PDFs |
-| Multi-turn conversation / intent routing | Planned for service | Notebook-only; see `experiment_rag_v4_display.ipynb` |
-| Evaluation automation | Planned | Historical notebook results are documented below |
+| Intent routing + structured conversation memory | Implemented | Opt-in, local in-process, bounded; see `docs/conversation_memory.md` |
+| Evaluation automation | Partial | API smoke, CQC-RAG Lite, failure diagnostics, and multi-turn eval scripts |
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-    Q["POST /query"] --> G{"Rule-based gate"}
+    Q["POST /query"] --> MEM{"use_memory + session_id?"}
+    MEM -->|no| G{"Rule-based gate"}
+    MEM -->|yes| RT["Intent router"]
+    RT --> G
     G -->|refuse| R["Structured refusal"]
     G -->|allow| RET["BM25 / Dense / Hybrid RRF"]
     RET --> GEN["Mock or key-gated live generation"]
     GEN --> OUT["Assessment + flags + citations + debug"]
+    OUT --> STORE["Bounded structured memory (per session)"]
     ART["chunks.json + manifest.json"] --> RET
 ```
+
+Single-turn requests skip the router and memory entirely. When memory is
+enabled, the router selects a route and the pipeline reads/updates a bounded
+per-session memory object; see
+[`docs/conversation_memory.md`](docs/conversation_memory.md).
 
 Retrieval uses the notebook's RRF formula, `1 / (60 + rank)`, followed by
 `retrieval_priority` weighting. The full profile builds an in-memory normalized
@@ -196,6 +205,76 @@ curl http://localhost:8000/sources
 `refusal`, and optional `debug`. Gate refusals short-circuit retrieval. Missing
 artifacts leave the service running in degraded mode and make `/query` return a
 clear `503 ARTIFACTS_NOT_FOUND` response.
+
+## Structured Conversation Memory (Multi-Turn)
+
+The service now supports opt-in multi-turn AML analysis through **structured
+conversation memory** and a deterministic **intent router**. This is local,
+in-process, bounded demo memory — *not* an unlimited transcript and *not* a
+production memory store. Single-turn clients are unaffected: omit the new
+fields and behavior is exactly as before.
+
+Memory activates only when `use_memory` is true, a `session_id` is supplied,
+and `memory_mode` is not `"off"`. The router classifies each turn into
+`retrieve`, `retrieve_with_memory`, `answer_from_history`, `clarify`, or
+`refuse`; routing uses rules only and never depends on a live LLM. Memory keeps
+the active scenario, deduplicated red flags, previous citations, retrieved
+chunk IDs, prior assessment, a referenceable prior-answer summary, unresolved
+clarification needs, and a bounded list of recent turn summaries. Out-of-scope
+("refuse") turns never pollute the active AML scenario. See
+[`docs/conversation_memory.md`](docs/conversation_memory.md) for the full
+schema, bounds, and routing policy.
+
+Two-turn demo session (PowerShell):
+
+```powershell
+# Turn 1 — establish an AML scenario
+$t1 = @{
+  query = "Funds show rapid movement through a virtual asset exchange."
+  retrieval_mode = "bm25"
+  llm_mode = "mock"
+  include_debug = $true
+  session_id = "demo-1"
+  use_memory = $true
+} | ConvertTo-Json
+Invoke-RestMethod -Uri http://localhost:8000/query `
+  -Method Post -ContentType "application/json" -Body $t1
+
+# Turn 2 — recall the prior flags from structured memory
+$t2 = @{
+  query = "剛剛那個風險可以再說明嗎？"
+  include_debug = $true
+  session_id = "demo-1"
+  use_memory = $true
+} | ConvertTo-Json
+Invoke-RestMethod -Uri http://localhost:8000/query `
+  -Method Post -ContentType "application/json" -Body $t2
+
+# Inspect the bounded structured memory for this session
+Invoke-RestMethod http://localhost:8000/sessions/demo-1/memory
+
+# Clear the session memory
+Invoke-RestMethod -Uri http://localhost:8000/sessions/demo-1/memory -Method Delete
+```
+
+In the turn-2 response, `debug.intent_route` is `answer_from_history`,
+`debug.referenced_previous_answer` is `true`, and `debug.active_flags` lists the
+red flags carried over from turn 1. Asking `剛剛引用的是哪些來源？` instead
+recalls the previous citations; a follow-up such as `那跟客戶職業不符有關嗎？`
+routes to `retrieve_with_memory` (prior scenario context plus fresh retrieval).
+
+### Multi-Turn Eval
+
+With the service running, the multi-turn evaluator drives four fixed sessions
+(scenario→recall, vague→clarify, out-of-scope→refuse, scenario→citations) and
+checks routing and memory behavior:
+
+```powershell
+.venv\Scripts\python.exe scripts\run_multiturn_eval.py
+```
+
+Results are written to `eval/results/multiturn_latest.jsonl` and
+`eval/reports/multiturn_latest.md` (both gitignored).
 
 ## API Smoke Eval
 
@@ -370,6 +449,8 @@ retrieval failure modes is in [`docs/evaluation_notes.md`](docs/evaluation_notes
 ```text
 api/                    FastAPI application
 rag_core/               config, schemas, loader, retrieval, gate, generation, pipeline
+rag_core/intent_router.py  deterministic multi-turn intent routing
+rag_core/memory/         bounded structured conversation memory + in-process store
 indexing/               offline private-PDF artifact builder
 artifacts/index/         committed sample chunks and manifest
 data/public_corpus_226/  committed public 226-chunk corpus profile and PDFs
@@ -389,12 +470,16 @@ notebooks_archive/       committed notebook migration sources
   the service degrades to BM25 and reports why.
 - Live Groq/Gemini/Gemma paths are not verified without operator-provided keys.
 - The semantic gate threshold is experimental and disabled by default.
-- Multi-turn state, intent routing, ingestion APIs, databases, and evaluation
-  endpoints are not implemented in the service.
+- Conversation memory is local, in-process, and bounded: it is not persisted,
+  not shared across workers, and is lost on restart. It is a demo memory store,
+  not a production one.
+- Intent routing is rule-based and will not capture every phrasing of a
+  follow-up. Ingestion APIs and databases remain out of scope.
 
 ## Roadmap
 
 - Add a public, licensed evaluation corpus and repeatable retrieval benchmark.
 - Add regression tests for dense and live-provider paths.
 - Expose operator-controlled ingestion and index versioning.
-- Port multi-turn intent routing only after defining a stable API contract.
+- Harden conversation memory (persistence, summarization) only after defining a
+  stable cross-process contract.

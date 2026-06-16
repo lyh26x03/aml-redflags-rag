@@ -954,3 +954,38 @@ After this FastAPI + Docker Compose demo is stable, future extensions may includ
 
 10\. multi-turn session state
 
+\## 16. Addendum: Structured Conversation Memory (Implemented)
+
+Roadmap item 10 (multi-turn session state) is now implemented in the service as
+an **opt-in, local, in-process, bounded** layer on top of the single-turn spec
+above. It does not alter the single-turn contract: requests without
+`session_id` / `use_memory` behave exactly as specified in this document, and
+the top-level `/query` response keys are unchanged.
+
+Additions:
+
+\* `POST /query` accepts additive optional fields: `session_id`, `use_memory`,
+  `memory_mode` (`off` | `structured`), and `reset_memory`.
+
+\* A deterministic, rule-based intent router selects one of `retrieve`,
+  `retrieve_with_memory`, `answer_from_history`, `clarify`, or `refuse`. Routing
+  never depends on a live LLM.
+
+\* Per-session structured memory is bounded (recent turns, citations, flags, and
+  retrieved chunk IDs are all capped; excerpts and summaries are truncated). It
+  is never an unlimited raw transcript and is not persisted.
+
+\* New debug fields (inside `debug`): `intent_route`, `route_reason`,
+  `memory_used`, `memory_available`, `memory_updated`, `memory_turn_count`,
+  `session_id`, `referenced_previous_answer`, `referenced_previous_evidence`,
+  `active_flags`, `active_citation_count`.
+
+\* New inspection endpoints (demo/debug only, no auth):
+  `GET /sessions/{session_id}/memory` and
+  `DELETE /sessions/{session_id}/memory`.
+
+\* No LangChain / LlamaIndex / Redis / SQL / vector DB / background workers /
+  external memory services were introduced, and retrieval math is unchanged.
+
+See `docs/conversation_memory.md` for the full schema, bounds, and routing
+policy.

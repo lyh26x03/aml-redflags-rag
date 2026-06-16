@@ -3,12 +3,14 @@
 ## 1. One-Minute Project Summary
 
 This is an AML red-flag RAG demo that migrated notebook experiments into a
-runnable, single-turn FastAPI service. The project focuses on evidence-bound
-answers: each response can expose an assessment, identified red flags,
-citations, refusal behavior, retrieved chunk IDs, and retrieval fallback
-details. Deterministic mock mode is the default, so the service and evaluation
-flows can run without API keys. It is an educational engineering demo, not
-legal advice or a production transaction-monitoring system.
+runnable FastAPI service. The project focuses on evidence-bound answers: each
+response can expose an assessment, identified red flags, citations, refusal
+behavior, retrieved chunk IDs, and retrieval fallback details. The single-turn
+path is the baseline; an opt-in multi-turn layer adds deterministic intent
+routing and bounded, local, in-process structured conversation memory.
+Deterministic mock mode is the default, so the service and evaluation flows can
+run without API keys. It is an educational engineering demo, not legal advice or
+a production transaction-monitoring system.
 
 ## 2. What Problem This Repo Demonstrates
 
@@ -72,9 +74,32 @@ Invoke-RestMethod -Uri http://localhost:8000/query `
 
 .venv\Scripts\python.exe scripts\run_api_smoke_eval.py
 .venv\Scripts\python.exe scripts\run_cqc_eval.py --report-md eval\reports\cqc_latest.md
+.venv\Scripts\python.exe scripts\run_multiturn_eval.py
 .venv\Scripts\python.exe scripts\run_failure_diagnostics.py
 .venv\Scripts\python.exe scripts\run_reviewer_pack.py
 ```
+
+To demo the opt-in multi-turn structured memory, run a two-turn session and
+then inspect the bounded memory:
+
+```powershell
+$t1 = @{ query = "Funds show rapid movement through a virtual asset exchange."
+  retrieval_mode = "bm25"; llm_mode = "mock"; include_debug = $true
+  session_id = "demo-1"; use_memory = $true } | ConvertTo-Json
+Invoke-RestMethod -Uri http://localhost:8000/query -Method Post `
+  -ContentType "application/json" -Body $t1
+
+$t2 = @{ query = "剛剛那個風險可以再說明嗎？"; include_debug = $true
+  session_id = "demo-1"; use_memory = $true } | ConvertTo-Json
+Invoke-RestMethod -Uri http://localhost:8000/query -Method Post `
+  -ContentType "application/json" -Body $t2
+
+Invoke-RestMethod http://localhost:8000/sessions/demo-1/memory
+```
+
+Turn 2 routes to `answer_from_history`: `debug.referenced_previous_answer` is
+`true` and `debug.active_flags` carries the red flags from turn 1, with no new
+retrieval. See [`conversation_memory.md`](conversation_memory.md).
 
 In the query response, point out:
 
@@ -166,7 +191,9 @@ harness, not as a reproduction of the full research method.
 - The committed knowledge corpus contains only 12 hand-written sample chunks.
 - This is not a production AML system and does not provide legal advice.
 - There is no user authentication or database.
-- The service API is single-turn; multi-turn routing remains outside it.
+- Multi-turn conversation memory is implemented but is local, in-process, and
+  bounded — it is not persisted, not shared across workers, and is not a
+  production memory store.
 - Live LLM providers are key-gated and experimental.
 - Docker configuration is provided but has not been verified on the documented
   Windows development host.
@@ -177,11 +204,15 @@ harness, not as a reproduction of the full research method.
 1. CQC report closure: completed.
 2. Failure Diagnostics Lite: completed.
 3. Gemma via Google AI Studio optional live path: completed.
-4. Intent routing.
-5. Multi-turn conversation.
+4. Intent routing: completed.
+5. Multi-turn structured conversation memory: completed.
+6. Memory persistence and summarization across processes: future work.
 
-The next roadmap item is intent routing. The optional Gemma live path uses the
-Google Generative Language API and remains outside the keyless reviewer path.
+Intent routing and structured conversation memory are now implemented as an
+opt-in, local, in-process, bounded demo layer
+([`conversation_memory.md`](conversation_memory.md)). The optional Gemma live
+path uses the Google Generative Language API and remains outside the keyless
+reviewer path.
 
 ## 10. Five-Minute Spoken Script
 
@@ -238,7 +269,12 @@ paraphrases; it is a regression harness, not a full CQC-RAG implementation or
 a model-quality benchmark. The reviewer pack combines the key local checks into
 a readable report without replacing the underlying tests.
 
-The project is deliberately scoped. It is not legal advice, a production AML
-platform, or a multi-turn service. Failure Diagnostics Lite and the optional
-Gemma-via-Google-AI-Studio live path are now implemented. The roadmap continues
-with intent routing and then multi-turn conversation.
+The project is deliberately scoped. It is not legal advice or a production AML
+platform. Multi-turn analysis is supported through an opt-in layer: a
+deterministic intent router and bounded, local, in-process structured
+conversation memory that lets follow-up questions refer to the prior scenario,
+its red flags, and its citations without re-stating them — while out-of-scope
+requests are refused without polluting the active scenario. Single-turn clients
+are unaffected. That memory is intentionally a demo store, not a persistent or
+production one. Failure Diagnostics Lite and the optional
+Gemma-via-Google-AI-Studio live path are also implemented.

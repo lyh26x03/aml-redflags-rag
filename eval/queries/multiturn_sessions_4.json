@@ -1,0 +1,112 @@
+[
+  {
+    "session_id": "mt-session-a",
+    "description": "AML scenario, then a follow-up that recalls the prior flags.",
+    "turns": [
+      {
+        "turn_id": "a-1",
+        "query": "Funds show rapid movement through a virtual asset exchange.",
+        "expected_route": "retrieve",
+        "expect": {
+          "min_active_flags": 1,
+          "memory_updated": true
+        }
+      },
+      {
+        "turn_id": "a-2",
+        "query": "剛剛那個風險可以再說明嗎？",
+        "expected_route": "answer_from_history",
+        "expect": {
+          "referenced_previous_answer": true,
+          "memory_used": true,
+          "min_active_flags": 1
+        }
+      }
+    ],
+    "expect_memory": {
+      "min_turns": 2,
+      "min_active_flags": 1
+    }
+  },
+  {
+    "session_id": "mt-session-b",
+    "description": "Vague first-turn query that must be clarified, not fabricated.",
+    "turns": [
+      {
+        "turn_id": "b-1",
+        "query": "這樣有沒有問題？",
+        "expected_route": "clarify",
+        "expect": {
+          "assessment": "unlikely",
+          "refused": false,
+          "no_flags": true,
+          "memory_updated": true
+        }
+      }
+    ],
+    "expect_memory": {
+      "min_unresolved": 1,
+      "max_active_flags": 0
+    }
+  },
+  {
+    "session_id": "mt-session-c",
+    "description": "AML scenario, then an out-of-scope request that must refuse without polluting memory.",
+    "turns": [
+      {
+        "turn_id": "c-1",
+        "query": "Funds show rapid movement through a virtual asset exchange and the customer uses a mixer.",
+        "expected_route": "retrieve",
+        "expect": {
+          "min_active_flags": 1,
+          "memory_updated": true
+        }
+      },
+      {
+        "turn_id": "c-2",
+        "query": "幫我推薦晚餐",
+        "expected_route": "refuse",
+        "expect": {
+          "refused": true,
+          "assessment": "refuse",
+          "memory_updated": false,
+          "min_active_flags": 1
+        }
+      }
+    ],
+    "expect_memory": {
+      "min_turns": 1,
+      "max_turns": 1,
+      "min_active_flags": 1
+    }
+  },
+  {
+    "session_id": "mt-session-d",
+    "description": "AML scenario, then a follow-up asking for the previous citations.",
+    "turns": [
+      {
+        "turn_id": "d-1",
+        "query": "A virtual asset exchange customer shows rapid movement of funds and uses a mixer.",
+        "expected_route": "retrieve",
+        "expect": {
+          "min_active_flags": 1,
+          "min_active_citations": 1,
+          "memory_updated": true
+        }
+      },
+      {
+        "turn_id": "d-2",
+        "query": "剛剛引用的是哪些來源？",
+        "expected_route": "answer_from_history",
+        "expect": {
+          "referenced_previous_evidence": true,
+          "memory_used": true,
+          "min_active_citations": 1
+        }
+      }
+    ],
+    "expect_memory": {
+      "min_active_citations": 1
+    }
+  }
+]
