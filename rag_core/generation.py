@@ -2,9 +2,10 @@
 
 Mock mode is deterministic and never calls the network.
 
-Live Groq / Google generateContent paths:
-  - Key-gated: if GROQ_API_KEY or GEMINI_API_KEY is absent the call is skipped
-    and mock output is returned with fallback_used=True in the debug block.
+Live Groq / Google / Ollama paths:
+  - Key-gated: if GROQ_API_KEY or GEMINI_API_KEY is absent the external HTTP
+    call is skipped and mock output is returned with fallback_used=True in the
+    debug block. Ollama uses a local HTTP endpoint and does not need a key.
   - Not execution-verified: live providers were not called during development
     (no API keys available in that environment).
   - Output constraint: ``_normalize_live_result`` intersects the live LLM's
@@ -347,18 +348,54 @@ def _call_google_generate_content(
     return json.loads(text)
 
 
+def _call_ollama_generate(
+    system_prompt: str,
+    user_prompt: str,
+    model_name: str,
+    base_url: str,
+    timeout: float,
+) -> Dict[str, Any]:
+    response = httpx.post(
+        f"{base_url.rstrip('/')}/api/generate",
+        json={
+            "model": model_name,
+            "system": system_prompt,
+            "prompt": user_prompt,
+            "stream": False,
+            "format": "json",
+            "options": {"temperature": 0.1},
+        },
+        timeout=timeout,
+    )
+    response.raise_for_status()
+    payload = response.json()
+    raw_response = payload["response"]
+    if not isinstance(raw_response, str):
+        raise TypeError("Ollama response payload missing response text")
+    return json.loads(raw_response)
+
+
 def call_llm(
     system_prompt: str,
     user_prompt: str,
-    llm_config: Dict[str, str],
+    llm_config: Dict[str, Any],
     timeout: float = 30.0,
 ) -> Dict[str, Any]:
     """Call a supported live provider using plain HTTP."""
     provider = llm_config.get("provider", "")
     model_name = llm_config.get("llm_model_name", "")
     api_key = llm_config.get("api_key", "")
-    if provider not in {"groq", "gemini", "gemma"}:
+    ollama_base_url = llm_config.get("ollama_base_url", "http://localhost:11434")
+    if provider not in {"groq", "gemini", "gemma", "ollama"}:
         raise ValueError(f"Unsupported LLM provider: {provider}")
+    if provider == "ollama":
+        return _call_ollama_generate(
+            system_prompt,
+            user_prompt,
+            model_name,
+            ollama_base_url,
+            timeout,
+        )
     if not api_key:
         raise ValueError(f"{provider or 'LLM'} API key is missing")
     if provider == "groq":
@@ -416,6 +453,8 @@ def generate(
     llm_timeout_seconds: float = 300.0,
     gate_allowed: bool = True,
     gate_reason: Optional[str] = None,
+    ollama_base_url: str = "http://localhost:11434",
+    ollama_model: str = "llama3.1:8b",
 ) -> Dict[str, Any]:
     """Generate a response and attach internal fallback metadata."""
     mock = mock_generate(query, chunks, gate_allowed, gate_reason)
@@ -434,8 +473,14 @@ def generate(
             },
         }
 
-    api_key = gemini_api_key if llm_mode in {"gemini", "gemma"} else groq_api_key
+    api_key = (
+        gemini_api_key
+        if llm_mode in {"gemini", "gemma"}
+        else groq_api_key if llm_mode == "groq" else ""
+    )
     provider_model = model_name
+    if llm_mode == "ollama":
+        provider_model = ollama_model or "llama3.1:8b"
     if llm_mode == "gemma" and (
         not provider_model or provider_model == "mock-local"
     ):
@@ -462,6 +507,8 @@ def generate(
                 "http_status": error.http_status,
             },
         }
+    if llm_mode == "ollama" and not provider_model:
+        provider_model = "llama3.1:8b"
     if not provider_model or provider_model == "mock-local":
         provider_model = (
             "gemini-2.0-flash" if llm_mode == "gemini"
@@ -476,6 +523,7 @@ def generate(
                 "provider": llm_mode,
                 "llm_model_name": provider_model,
                 "api_key": api_key,
+                "ollama_base_url": ollama_base_url,
             },
             timeout=llm_timeout_seconds,
         )

@@ -25,11 +25,13 @@ class Settings(BaseSettings):
     corpus_profile: Literal["sample", "public_226"] = "sample"
     artifact_dir: str = "artifacts/index"
     public_226_artifact_dir: str = "data/public_corpus_226"
-    llm_mode: str = "mock"  # mock | gemini | gemma | groq
+    llm_mode: str = "mock"  # mock | gemini | gemma | groq | ollama
     model_name: str = "mock-local"
 
     gemini_api_key: str = ""
     groq_api_key: str = ""
+    ollama_base_url: str = "http://localhost:11434"
+    ollama_model: str = "llama3.1:8b"
     llm_timeout_seconds: float = 300.0
 
     default_top_k: int = 5

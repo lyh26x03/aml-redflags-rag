@@ -229,7 +229,7 @@ def test_unsupported_mode_helper_detects_llm_mode_validation_error():
             {
                 "type": "literal_error",
                 "loc": ["body", "llm_mode"],
-                "msg": "Input should be 'mock', 'gemini', 'gemma' or 'groq'",
+                "msg": "Input should be 'mock', 'gemini', 'gemma', 'groq' or 'ollama'",
             }
         ]
     }

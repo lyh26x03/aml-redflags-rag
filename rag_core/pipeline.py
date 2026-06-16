@@ -47,6 +47,8 @@ class RAGPipeline:
             gemini_api_key=self.settings.gemini_api_key,
             groq_api_key=self.settings.groq_api_key,
             llm_timeout_seconds=self.settings.llm_timeout_seconds,
+            ollama_base_url=self.settings.ollama_base_url,
+            ollama_model=self.settings.ollama_model,
             gate_allowed=gate.allowed,
             gate_reason=gate.reason_message or gate.reason_code,
         )
