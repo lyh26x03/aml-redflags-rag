@@ -29,9 +29,10 @@ Existing single-turn clients are unaffected:
 - `POST /query` without `session_id` / `use_memory` behaves exactly as before.
 - The top-level `QueryResponse` keys are unchanged. All new routing/memory
   fields are additive and live inside `debug`.
-- Intent routing's memory-only routes (`clarify`, `answer_from_history`,
-  `retrieve_with_memory`, and the router's own non-AML refusal) only activate
-  when memory is enabled, so single-turn behavior is preserved.
+- Intent routing's memory-only routes (`ask_clarifying_question`,
+  `answer_from_history`, `retrieve_with_memory`, and the router's own non-AML
+  refusal) only activate when memory is enabled, so single-turn behavior is
+  preserved.
 
 Memory is enabled for a request only when **all** of these hold:
 `use_memory == true`, a non-empty `session_id` is supplied, and `memory_mode`
@@ -50,17 +51,42 @@ is not `"off"`.
 
 Routing is deterministic and rule-based (no live-LLM dependency).
 
-| Route | When | Behavior |
-|---|---|---|
-| `retrieve` | Normal AML query | Evidence retrieval; updates memory |
-| `retrieve_with_memory` | Follow-up connector (e.g. "那跟…有關嗎") with memory available | Composes prior scenario + new question, retrieves, updates memory |
-| `answer_from_history` | Recall of prior answer/flags/citations (e.g. "剛剛", "上一題", "those flags", "剛剛引用的是哪些來源") | Answers from structured memory; no new retrieval |
-| `clarify` | Under-specified, no AML topic (e.g. "這樣有沒有問題？") | Asks for detail; stores an unresolved clarification need |
-| `refuse` | Gate out-of-scope (sanctions/TBML/tax) **or** clearly non-AML request (e.g. "幫我推薦晚餐") | Structured refusal; **does not touch memory** |
+### Three high-level outcomes (reviewer-facing)
 
-`retrieve_with_memory` is implemented: it is the route for a follow-up that
-needs the previous scenario context *and* fresh retrieval (as opposed to
-`answer_from_history`, which restates what is already known).
+Every turn resolves to exactly one of three outcomes, surfaced as
+`debug.route_family`. This is the simple story for a demo or a reviewer:
+
+| `route_family` | Meaning |
+|---|---|
+| `retrieve` | Evidence retrieval happened (single-turn or memory-aware follow-up). |
+| `refuse` | The request was out of scope; **memory is not touched**. |
+| `no_retrieval_response` | Answered deterministically from conversation state — either recalling prior analysis or asking the user to clarify — with no new retrieval. |
+
+### Five fine-grained routes (debug / tests)
+
+Internally the router keeps five deterministic routes (surfaced as
+`debug.intent_route`) so multi-turn behavior stays specific and testable. Each
+maps onto exactly one outcome above:
+
+| `intent_route` | `route_family` | When | Behavior |
+|---|---|---|---|
+| `retrieve` | `retrieve` | Normal AML query (incl. a follow-up that introduces a new signal) | Evidence retrieval; updates memory |
+| `retrieve_with_memory` | `retrieve` | Follow-up connector (e.g. "那跟…有關嗎") with memory available | Composes prior scenario + new question, retrieves, updates memory |
+| `answer_from_history` | `no_retrieval_response` | Recall/explain prior answer/flags/citations (e.g. "剛剛", "上一題", "those flags", "剛剛引用的是哪些來源") | Answers from structured memory; no new retrieval |
+| `ask_clarifying_question` | `no_retrieval_response` | Vague/under-specified first-turn input, no AML topic (e.g. "這樣有沒有問題？") | Asks the user for the missing detail; stores an unresolved clarification need |
+| `refuse` | `refuse` | Gate out-of-scope (sanctions/TBML/tax) **or** clearly non-AML request (e.g. "幫我推薦晚餐") | Structured refusal; **does not touch memory** |
+
+Two routes the old notebook conflated under a single "clarification" label are
+deliberately kept distinct here:
+
+- `ask_clarifying_question` — the *user's input* is too vague to assess; the
+  system asks **the user** for more detail and records the unresolved need.
+- `answer_from_history` — the user asks the *system* to explain or recall a
+  prior answer; the system restates what is already in memory.
+
+`retrieve_with_memory` is the route for a follow-up that needs the previous
+scenario context *and* fresh retrieval (as opposed to `answer_from_history`,
+which restates what is already known).
 
 ## Memory schema
 
@@ -99,17 +125,22 @@ Per `session_id`, `ConversationMemory` holds:
 - `answer_from_history` — answers from memory (or returns a clear no-context
   message when nothing is stored); appends a recent turn; does not change the
   active scenario.
-- `clarify` — stores the unresolved clarification need and appends a recent
-  turn; no flags/citations are added.
+- `ask_clarifying_question` — stores the unresolved clarification need and
+  appends a recent turn; no flags/citations are added.
 - `refuse` — returns a structured refusal and **does not modify memory at all**,
   so out-of-scope requests cannot pollute the active AML scenario state.
 
 ## Debug fields (inside `debug`)
 
-`intent_route`, `route_reason`, `memory_used`, `memory_available`,
-`memory_updated`, `memory_turn_count`, `session_id`,
+`intent_route`, `route_family`, `route_reason`, `memory_used`,
+`memory_available`, `memory_updated`, `memory_turn_count`, `session_id`,
 `referenced_previous_answer`, `referenced_previous_evidence`, `active_flags`,
 `active_citation_count`.
+
+`route_family` is the high-level (three-outcome) view of `intent_route`; it is
+present for every request (including single-turn) and is derived
+deterministically, so a reviewer can read the outcome without learning the five
+internal labels.
 
 ## Inspection endpoints (demo/debug only, no auth)
 
@@ -124,10 +155,13 @@ Per `session_id`, `ConversationMemory` holds:
 service (deterministic mock generation, BM25 retrieval) and checks routing +
 memory behavior:
 
-- Session A: AML scenario → follow-up recalls prior flags
-- Session B: vague first-turn query → clarification
+- Session A: AML scenario → follow-up recalls prior flags (`answer_from_history`)
+- Session B: vague first-turn query → `ask_clarifying_question`
 - Session C: out-of-scope query → refusal with no scenario pollution
 - Session D: AML scenario → follow-up asks for the previous citations
+
+Each turn declares both `expected_route` and `expected_family`, so the harness
+checks the fine-grained route *and* the three-outcome view.
 
 Outputs (gitignored): `eval/results/multiturn_latest.jsonl`,
 `eval/reports/multiturn_latest.md`.

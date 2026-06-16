@@ -107,6 +107,7 @@ def test_followup_recalls_previous_flags_from_memory():
         body = response.json()
         debug = body["debug"]
         assert debug["intent_route"] == "answer_from_history"
+        assert debug["route_family"] == "no_retrieval_response"
         assert debug["memory_used"] is True
         assert debug["referenced_previous_answer"] is True
         assert debug["active_flags"]
@@ -123,6 +124,7 @@ def test_followup_recalls_previous_citations_from_memory():
         assert response.status_code == 200
         debug = response.json()["debug"]
         assert debug["intent_route"] == "answer_from_history"
+        assert debug["route_family"] == "no_retrieval_response"
         assert debug["referenced_previous_evidence"] is True
         assert debug["active_citation_count"] >= 1
         assert response.json()["citations"]
@@ -136,10 +138,38 @@ def test_followup_question_uses_retrieve_with_memory():
         )
         debug = response.json()["debug"]
         assert debug["intent_route"] == "retrieve_with_memory"
+        assert debug["route_family"] == "retrieve"
         assert debug["memory_used"] is True
         # composing prior scenario + new question surfaces the mismatch flag
         codes = {flag["code"] for flag in response.json()["identified_flags"]}
         assert "RF-06" in codes
+
+
+def test_new_aml_signal_in_followup_uses_plain_retrieve_and_keeps_prior_flags():
+    # A follow-up that introduces a *new* AML signal (no recall phrasing, no
+    # "那跟…" connector) is plain `retrieve`, not retrieve_with_memory: it does
+    # not lean on the prior scenario, but it must still merge into memory
+    # without dropping the flags established on turn 1.
+    with _client() as client:
+        first = _query(client, SCENARIO, session_id="s1", use_memory=True)
+        prior_flags = set(first.json()["debug"]["active_flags"])
+        assert prior_flags  # turn 1 established at least one flag
+
+        response = _query(
+            client,
+            "The customer also structures cash deposits just below the reporting threshold.",
+            session_id="s1",
+            use_memory=True,
+        )
+        debug = response.json()["debug"]
+        assert debug["intent_route"] == "retrieve"
+        assert debug["route_family"] == "retrieve"
+        # plain retrieve does not compose prior scenario context
+        assert debug["memory_used"] is False
+        assert debug["memory_updated"] is True
+        assert debug["memory_turn_count"] == 2
+        # the new turn merges into memory without losing the earlier flags
+        assert prior_flags <= set(debug["active_flags"])
 
 
 # --- answer_from_history with no memory --------------------------------------
@@ -160,21 +190,25 @@ def test_answer_from_history_without_memory_gives_no_context_response():
         assert "先前" in body["answer"] or "No previous" in body["answer"]
 
 
-# --- clarify -----------------------------------------------------------------
+# --- ask_clarifying_question (vague first-turn input) ------------------------
 
 
-def test_vague_first_turn_routes_to_clarify_and_stores_unresolved():
+def test_vague_first_turn_asks_clarifying_question_and_stores_unresolved():
     with _client() as client:
         response = _query(client, "這樣有沒有問題？", session_id="s1", use_memory=True)
         body = response.json()
         debug = body["debug"]
-        assert debug["intent_route"] == "clarify"
+        assert debug["intent_route"] == "ask_clarifying_question"
+        # high-level outcome: a deterministic no-retrieval response
+        assert debug["route_family"] == "no_retrieval_response"
         assert body["assessment"] == "unlikely"
         assert body["refusal"]["refused"] is False
         assert body["identified_flags"] == []
 
         snapshot = client.get("/sessions/s1/memory").json()
         assert snapshot["unresolved_questions"]
+        # recorded under the renamed route, distinct from answer_from_history
+        assert snapshot["recent_turns"][-1]["intent_route"] == "ask_clarifying_question"
 
 
 # --- refuse: no memory pollution ---------------------------------------------
@@ -190,6 +224,7 @@ def test_out_of_scope_refuses_and_does_not_pollute_memory():
         body = response.json()
         debug = body["debug"]
         assert debug["intent_route"] == "refuse"
+        assert debug["route_family"] == "refuse"
         assert body["assessment"] == "refuse"
         assert body["refusal"]["refused"] is True
         assert debug["memory_updated"] is False

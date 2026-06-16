@@ -3,19 +3,35 @@
 This is a *rule-based* router by design: routing must be testable and must not
 depend on a live LLM (constraint: avoid live-LLM dependency for routing). It
 maps a user query — plus the current gate decision and whether memory is
-available — onto one of five routes.
+available — onto one of five fine-grained routes.
 
-Routes:
-- ``retrieve``             — normal evidence retrieval (single-turn default)
-- ``refuse``               — clearly out-of-scope request
-- ``clarify``              — under-specified; cannot be answered responsibly yet
-- ``answer_from_history``  — user asks about the previous answer/flags/citations
-- ``retrieve_with_memory`` — follow-up needing prior scenario context + fresh
-                             retrieval
+Reviewer-facing model: every route collapses onto one of **three** high-level
+outcomes (see :func:`route_family`):
 
-The extra memory routes (clarify / answer_from_history / retrieve_with_memory,
-and the router's own non-AML out-of-scope refusal) only fire when memory is
-enabled, so single-turn ``/query`` behavior is unchanged.
+- ``retrieve``              — evidence retrieval happened (with or without memory)
+- ``refuse``                — request was out of scope
+- ``no_retrieval_response`` — answered deterministically from conversation state
+                              (history recall or asking the user to clarify)
+
+Fine-grained routes (kept for debug + deterministic tests):
+- ``retrieve``                — normal evidence retrieval (single-turn default)
+- ``refuse``                  — clearly out-of-scope request
+- ``ask_clarifying_question`` — vague/under-specified first-turn input: ask the
+                                user for the missing detail and store the
+                                unresolved need
+- ``answer_from_history``     — user asks to recall/explain the previous
+                                answer/flags/citations; answered from memory
+- ``retrieve_with_memory``    — follow-up needing prior scenario context + fresh
+                                retrieval
+
+``ask_clarifying_question`` and ``answer_from_history`` are deliberately
+distinct: the old notebook conflated both under a single "clarification" label.
+Here, asking the user for more detail (``ask_clarifying_question``) is separate
+from explaining a prior answer (``answer_from_history``).
+
+The extra memory routes (ask_clarifying_question / answer_from_history /
+retrieve_with_memory, and the router's own non-AML out-of-scope refusal) only
+fire when memory is enabled, so single-turn ``/query`` behavior is unchanged.
 """
 
 from __future__ import annotations
@@ -28,17 +44,47 @@ from rag_core.gate import TopicDetector
 
 ROUTE_RETRIEVE = "retrieve"
 ROUTE_REFUSE = "refuse"
-ROUTE_CLARIFY = "clarify"
+ROUTE_ASK_CLARIFYING_QUESTION = "ask_clarifying_question"
 ROUTE_ANSWER_FROM_HISTORY = "answer_from_history"
 ROUTE_RETRIEVE_WITH_MEMORY = "retrieve_with_memory"
 
 ALL_ROUTES = (
     ROUTE_RETRIEVE,
     ROUTE_REFUSE,
-    ROUTE_CLARIFY,
+    ROUTE_ASK_CLARIFYING_QUESTION,
     ROUTE_ANSWER_FROM_HISTORY,
     ROUTE_RETRIEVE_WITH_MEMORY,
 )
+
+# --- high-level route families (reviewer-facing "three outcomes") -----------
+# Docs and demos lead with these three outcomes; ``intent_route`` keeps the
+# finer label for debugging and deterministic tests. The mapping is total and
+# deterministic — no live-LLM involvement.
+FAMILY_RETRIEVE = "retrieve"
+FAMILY_REFUSE = "refuse"
+FAMILY_NO_RETRIEVAL = "no_retrieval_response"
+
+ALL_ROUTE_FAMILIES = (FAMILY_RETRIEVE, FAMILY_REFUSE, FAMILY_NO_RETRIEVAL)
+
+_ROUTE_TO_FAMILY = {
+    ROUTE_RETRIEVE: FAMILY_RETRIEVE,
+    ROUTE_RETRIEVE_WITH_MEMORY: FAMILY_RETRIEVE,
+    ROUTE_REFUSE: FAMILY_REFUSE,
+    ROUTE_ANSWER_FROM_HISTORY: FAMILY_NO_RETRIEVAL,
+    ROUTE_ASK_CLARIFYING_QUESTION: FAMILY_NO_RETRIEVAL,
+}
+
+
+def route_family(route: Optional[str]) -> Optional[str]:
+    """Collapse a fine-grained route onto one of three reviewer-facing outcomes.
+
+    Returns ``None`` only when ``route`` is ``None`` (e.g. debug omitted).
+    Unknown routes default to the retrieve family, which is the safe
+    single-turn default.
+    """
+    if route is None:
+        return None
+    return _ROUTE_TO_FAMILY.get(route, FAMILY_RETRIEVE)
 
 
 def _compile(patterns) -> "re.Pattern[str]":
@@ -215,9 +261,9 @@ class IntentRouter:
                 referenced_history=True,
             )
 
-        # 4. Under-specified query with no AML topic → ask to clarify.
+        # 4. Under-specified query with no AML topic → ask a clarifying question.
         if is_vague and not detected_topics:
-            return RouteDecision(ROUTE_CLARIFY, "underspecified")
+            return RouteDecision(ROUTE_ASK_CLARIFYING_QUESTION, "underspecified")
 
         # 5. Default: normal evidence retrieval.
         return RouteDecision(ROUTE_RETRIEVE, "default_retrieve")

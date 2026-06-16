@@ -61,6 +61,21 @@ def test_loads_committed_sessions():
         turn["expected_route"] for s in sessions for turn in s["turns"]
     }
     assert routes <= run_multiturn_eval.VALID_ROUTES
+    families = {
+        turn["expected_family"]
+        for s in sessions
+        for turn in s["turns"]
+        if "expected_family" in turn
+    }
+    assert families <= run_multiturn_eval.VALID_ROUTE_FAMILIES
+    # every committed expected_family is the canonical family for its route
+    for session in sessions:
+        for turn in session["turns"]:
+            if "expected_family" in turn:
+                assert (
+                    turn["expected_family"]
+                    == run_multiturn_eval.ROUTE_FAMILY[turn["expected_route"]]
+                )
 
 
 @pytest.mark.parametrize(
@@ -88,6 +103,21 @@ def test_invalid_expected_route_fails_clearly():
         run_multiturn_eval.validate_sessions([bad])
 
 
+def test_invalid_expected_family_fails_clearly():
+    bad = _session()
+    bad["turns"][0]["expected_family"] = "warp_drive"
+    with pytest.raises(ValueError, match="invalid expected_family"):
+        run_multiturn_eval.validate_sessions([bad])
+
+
+def test_check_turn_flags_family_mismatch():
+    # Route matches, but the declared high-level outcome does not.
+    turn = dict(_session()["turns"][0], expected_family="refuse")
+    record = run_multiturn_eval.check_turn(turn, _body(route="retrieve"))
+    assert any("route_family" in error for error in record["errors"])
+    assert record["actual_family"] == "retrieve"
+
+
 # --- pure turn checks --------------------------------------------------------
 
 
@@ -101,7 +131,7 @@ def test_check_turn_passes_when_expectations_met():
 
 def test_check_turn_flags_route_mismatch():
     turn = _session()["turns"][0]
-    record = run_multiturn_eval.check_turn(turn, _body(route="clarify"))
+    record = run_multiturn_eval.check_turn(turn, _body(route="refuse"))
     assert any("route" in error for error in record["errors"])
 
 
@@ -115,10 +145,10 @@ def test_check_turn_no_flags_expectation():
     turn = {
         "turn_id": "t",
         "query": "vague",
-        "expected_route": "clarify",
+        "expected_route": "ask_clarifying_question",
         "expect": {"no_flags": True},
     }
-    body = _body(route="clarify")
+    body = _body(route="ask_clarifying_question")
     body["identified_flags"] = [{"code": "RF-02"}]
     record = run_multiturn_eval.check_turn(turn, body)
     assert any("no_flags" in error for error in record["errors"])

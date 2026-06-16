@@ -215,13 +215,22 @@ production memory store. Single-turn clients are unaffected: omit the new
 fields and behavior is exactly as before.
 
 Memory activates only when `use_memory` is true, a `session_id` is supplied,
-and `memory_mode` is not `"off"`. The router classifies each turn into
-`retrieve`, `retrieve_with_memory`, `answer_from_history`, `clarify`, or
-`refuse`; routing uses rules only and never depends on a live LLM. Memory keeps
-the active scenario, deduplicated red flags, previous citations, retrieved
-chunk IDs, prior assessment, a referenceable prior-answer summary, unresolved
-clarification needs, and a bounded list of recent turn summaries. Out-of-scope
-("refuse") turns never pollute the active AML scenario. See
+and `memory_mode` is not `"off"`. Routing uses rules only and never depends on a
+live LLM. Every turn resolves to one of **three high-level outcomes**
+(`debug.route_family`):
+
+1. **`retrieve`** — evidence retrieval happened (`retrieve` or
+   `retrieve_with_memory`).
+2. **`refuse`** — out of scope; memory is left untouched.
+3. **`no_retrieval_response`** — answered deterministically from conversation
+   state: `answer_from_history` (recall/explain a prior answer) or
+   `ask_clarifying_question` (vague input → ask the user for detail).
+
+The finer `debug.intent_route` keeps all five labels for debugging and tests.
+Memory keeps the active scenario, deduplicated red flags, previous citations,
+retrieved chunk IDs, prior assessment, a referenceable prior-answer summary,
+unresolved clarification needs, and a bounded list of recent turn summaries.
+Out-of-scope ("refuse") turns never pollute the active AML scenario. See
 [`docs/conversation_memory.md`](docs/conversation_memory.md) for the full
 schema, bounds, and routing policy.
 
@@ -266,8 +275,9 @@ routes to `retrieve_with_memory` (prior scenario context plus fresh retrieval).
 ### Multi-Turn Eval
 
 With the service running, the multi-turn evaluator drives four fixed sessions
-(scenario→recall, vague→clarify, out-of-scope→refuse, scenario→citations) and
-checks routing and memory behavior:
+(scenario→recall, vague→ask-clarifying-question, out-of-scope→refuse,
+scenario→citations) and checks routing (both `intent_route` and the
+three-outcome `route_family`) and memory behavior:
 
 ```powershell
 .venv\Scripts\python.exe scripts\run_multiturn_eval.py

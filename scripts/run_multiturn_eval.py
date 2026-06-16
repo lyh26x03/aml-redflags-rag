@@ -35,10 +35,22 @@ DEFAULT_REPORT_MD = REPO_ROOT / "eval" / "reports" / "multiturn_latest.md"
 VALID_ROUTES = {
     "retrieve",
     "refuse",
-    "clarify",
+    "ask_clarifying_question",
     "answer_from_history",
     "retrieve_with_memory",
 }
+
+# The five fine-grained routes collapse onto three reviewer-facing outcomes.
+# Kept as a local mirror of rag_core.intent_router.route_family so this harness
+# stays stdlib-only (it talks to the service over HTTP, not via imports).
+ROUTE_FAMILY = {
+    "retrieve": "retrieve",
+    "retrieve_with_memory": "retrieve",
+    "refuse": "refuse",
+    "answer_from_history": "no_retrieval_response",
+    "ask_clarifying_question": "no_retrieval_response",
+}
+VALID_ROUTE_FAMILIES = set(ROUTE_FAMILY.values())
 
 
 # --- input validation ---------------------------------------------------------
@@ -78,6 +90,11 @@ def validate_sessions(sessions: Any) -> List[Dict[str, Any]]:
                 raise ValueError(f"{turn_id}: query must be a non-empty string")
             if turn.get("expected_route") not in VALID_ROUTES:
                 raise ValueError(f"{turn_id}: invalid expected_route")
+            if (
+                "expected_family" in turn
+                and turn["expected_family"] not in VALID_ROUTE_FAMILIES
+            ):
+                raise ValueError(f"{turn_id}: invalid expected_family")
             if not isinstance(turn.get("expect", {}), dict):
                 raise ValueError(f"{turn_id}: expect must be a JSON object")
         if not isinstance(session.get("expect_memory", {}), dict):
@@ -148,6 +165,17 @@ def check_turn(turn: Dict[str, Any], body: Dict[str, Any]) -> Dict[str, Any]:
             f"route: expected {turn['expected_route']}, got {actual_route}"
         )
 
+    # High-level outcome: prefer the service-reported family, fall back to the
+    # local mirror so the check works even against older debug payloads.
+    actual_family = debug.get("route_family") or ROUTE_FAMILY.get(actual_route)
+    expected_family = turn.get("expected_family") or ROUTE_FAMILY.get(
+        turn["expected_route"]
+    )
+    if expected_family is not None and actual_family != expected_family:
+        errors.append(
+            f"route_family: expected {expected_family}, got {actual_family}"
+        )
+
     bool_fields = (
         "memory_used",
         "memory_updated",
@@ -189,6 +217,8 @@ def check_turn(turn: Dict[str, Any], body: Dict[str, Any]) -> Dict[str, Any]:
         "query": turn["query"],
         "expected_route": turn["expected_route"],
         "actual_route": actual_route,
+        "expected_family": expected_family,
+        "actual_family": actual_family,
         "assessment": body.get("assessment"),
         "refused": bool(refusal.get("refused")),
         "memory_used": bool(debug.get("memory_used")),

@@ -1,12 +1,16 @@
 """Unit tests for structured conversation memory state, store, and router."""
 
 from rag_core.intent_router import (
+    FAMILY_NO_RETRIEVAL,
+    FAMILY_REFUSE,
+    FAMILY_RETRIEVE,
     ROUTE_ANSWER_FROM_HISTORY,
-    ROUTE_CLARIFY,
+    ROUTE_ASK_CLARIFYING_QUESTION,
     ROUTE_REFUSE,
     ROUTE_RETRIEVE,
     ROUTE_RETRIEVE_WITH_MEMORY,
     IntentRouter,
+    route_family,
 )
 from rag_core.memory import (
     MAX_ACTIVE_CITATIONS,
@@ -139,6 +143,8 @@ def test_clarify_turn_stores_unresolved_without_flags():
     assert memory.unresolved_questions == ["這樣有沒有問題？"]
     assert memory.active_flags == []
     assert memory.active_scenario_summary == ""
+    # the turn is recorded under the renamed ask_clarifying_question route
+    assert memory.recent_turns[-1].intent_route == "ask_clarifying_question"
 
 
 def test_to_dict_is_json_serializable_shape():
@@ -258,11 +264,12 @@ def test_router_followup_without_memory_does_not_use_memory_route():
         memory_enabled=True,
         has_memory=False,
     )
-    # has a detected AML topic (identity_mismatch) -> plain retrieve, not clarify
+    # has a detected AML topic (identity_mismatch) -> plain retrieve, not
+    # ask_clarifying_question
     assert decision.route == ROUTE_RETRIEVE
 
 
-def test_router_vague_first_turn_routes_to_clarify():
+def test_router_vague_first_turn_routes_to_ask_clarifying_question():
     router = _router()
     decision = router.route(
         "這樣有沒有問題？",
@@ -270,7 +277,7 @@ def test_router_vague_first_turn_routes_to_clarify():
         memory_enabled=True,
         has_memory=False,
     )
-    assert decision.route == ROUTE_CLARIFY
+    assert decision.route == ROUTE_ASK_CLARIFYING_QUESTION
 
 
 def test_router_out_of_scope_routes_to_refuse():
@@ -294,3 +301,23 @@ def test_router_normal_aml_query_routes_to_retrieve():
         has_memory=False,
     )
     assert decision.route == ROUTE_RETRIEVE
+
+
+# --- route families (the three reviewer-facing outcomes) --------------------
+
+
+def test_route_family_collapses_five_routes_onto_three_outcomes():
+    # retrieval outcomes
+    assert route_family(ROUTE_RETRIEVE) == FAMILY_RETRIEVE
+    assert route_family(ROUTE_RETRIEVE_WITH_MEMORY) == FAMILY_RETRIEVE
+    # refusal outcome
+    assert route_family(ROUTE_REFUSE) == FAMILY_REFUSE
+    # no-retrieval (deterministic) outcomes
+    assert route_family(ROUTE_ANSWER_FROM_HISTORY) == FAMILY_NO_RETRIEVAL
+    assert route_family(ROUTE_ASK_CLARIFYING_QUESTION) == FAMILY_NO_RETRIEVAL
+
+
+def test_route_family_is_none_only_for_none():
+    assert route_family(None) is None
+    # unknown labels default to the safe single-turn retrieve family
+    assert route_family("something_new") == FAMILY_RETRIEVE

@@ -17,10 +17,12 @@ MemoryMode = Literal["off", "structured"]
 IntentRoute = Literal[
     "retrieve",
     "refuse",
-    "clarify",
+    "ask_clarifying_question",
     "answer_from_history",
     "retrieve_with_memory",
 ]
+# Three reviewer-facing outcomes that the five fine-grained routes collapse onto.
+RouteFamily = Literal["retrieve", "refuse", "no_retrieval_response"]
 
 
 class QueryRequest(BaseModel):
@@ -73,7 +75,9 @@ class RetrievalDebug(BaseModel):
     parse_success: Optional[bool] = None
     # --- intent routing + structured conversation memory (additive) ---
     # Present for all requests; inert defaults keep single-turn debug stable.
+    # ``route_family`` is the high-level (three-outcome) view of ``intent_route``.
     intent_route: Optional[IntentRoute] = None
+    route_family: Optional[RouteFamily] = None
     route_reason: Optional[str] = None
     memory_used: bool = False
     memory_available: bool = False

@@ -171,10 +171,14 @@ class ConversationMemory:
         )
 
     def record_clarify_turn(self, *, user_query: str, clarification: str) -> None:
-        """Record an under-specified turn — stores the unresolved need."""
+        """Record an under-specified turn — stores the unresolved need.
+
+        Recorded under the ``ask_clarifying_question`` route: the system asks the
+        user for the missing detail rather than fabricating an assessment.
+        """
         self._add_unresolved(user_query)
         self._append_turn(
-            intent_route="clarify",
+            intent_route="ask_clarifying_question",
             user_query=user_query,
             assessment="unlikely",
             answer_summary=_truncate(clarification, ANSWER_SUMMARY_CHARS),

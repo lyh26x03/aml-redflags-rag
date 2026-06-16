@@ -7,6 +7,7 @@
         "turn_id": "a-1",
         "query": "Funds show rapid movement through a virtual asset exchange.",
         "expected_route": "retrieve",
+        "expected_family": "retrieve",
         "expect": {
           "min_active_flags": 1,
           "memory_updated": true
@@ -16,6 +17,7 @@
         "turn_id": "a-2",
         "query": "剛剛那個風險可以再說明嗎？",
         "expected_route": "answer_from_history",
+        "expected_family": "no_retrieval_response",
         "expect": {
           "referenced_previous_answer": true,
           "memory_used": true,
@@ -35,7 +37,8 @@
       {
         "turn_id": "b-1",
         "query": "這樣有沒有問題？",
-        "expected_route": "clarify",
+        "expected_route": "ask_clarifying_question",
+        "expected_family": "no_retrieval_response",
         "expect": {
           "assessment": "unlikely",
           "refused": false,
@@ -57,6 +60,7 @@
         "turn_id": "c-1",
         "query": "Funds show rapid movement through a virtual asset exchange and the customer uses a mixer.",
         "expected_route": "retrieve",
+        "expected_family": "retrieve",
         "expect": {
           "min_active_flags": 1,
           "memory_updated": true
@@ -66,6 +70,7 @@
         "turn_id": "c-2",
         "query": "幫我推薦晚餐",
         "expected_route": "refuse",
+        "expected_family": "refuse",
         "expect": {
           "refused": true,
           "assessment": "refuse",
@@ -88,6 +93,7 @@
         "turn_id": "d-1",
         "query": "A virtual asset exchange customer shows rapid movement of funds and uses a mixer.",
         "expected_route": "retrieve",
+        "expected_family": "retrieve",
         "expect": {
           "min_active_flags": 1,
           "min_active_citations": 1,
@@ -98,6 +104,7 @@
         "turn_id": "d-2",
         "query": "剛剛引用的是哪些來源？",
         "expected_route": "answer_from_history",
+        "expected_family": "no_retrieval_response",
         "expect": {
           "referenced_previous_evidence": true,
           "memory_used": true,

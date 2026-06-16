@@ -25,12 +25,13 @@ from rag_core.gate import GateResult, SemanticScopeClassifier, check_scope
 from rag_core.generation import RF_CATALOG, generate
 from rag_core.intent_router import (
     ROUTE_ANSWER_FROM_HISTORY,
-    ROUTE_CLARIFY,
+    ROUTE_ASK_CLARIFYING_QUESTION,
     ROUTE_REFUSE,
     ROUTE_RETRIEVE,
     ROUTE_RETRIEVE_WITH_MEMORY,
     IntentRouter,
     RouteDecision,
+    route_family,
 )
 from rag_core.memory import ConversationMemory, ConversationMemoryStore
 from rag_core.retrieval import RetrievalResult, Retriever
@@ -170,8 +171,8 @@ class RAGPipeline:
         route = ctx.decision.route
         if route == ROUTE_REFUSE:
             return self._handle_refuse(ctx)
-        if route == ROUTE_CLARIFY:
-            return self._handle_clarify(ctx)
+        if route == ROUTE_ASK_CLARIFYING_QUESTION:
+            return self._handle_ask_clarifying_question(ctx)
         if route == ROUTE_ANSWER_FROM_HISTORY:
             return self._handle_answer_from_history(ctx)
         if route == ROUTE_RETRIEVE_WITH_MEMORY:
@@ -278,7 +279,9 @@ class RAGPipeline:
         )
         return self._finalize(generated, retrieval, generation_debug, ctx, mem)
 
-    def _handle_clarify(self, ctx: "_RequestContext") -> QueryResponse:
+    def _handle_ask_clarifying_question(
+        self, ctx: "_RequestContext"
+    ) -> QueryResponse:
         memory = self.memory_store.get_or_create(ctx.request.session_id)
         memory.record_clarify_turn(
             user_query=ctx.request.query, clarification=CLARIFY_ANSWER
@@ -415,6 +418,7 @@ class RAGPipeline:
             parse_success=generated.get("parse_success"),
             retrieved_chunk_ids=retrieval.chunk_ids,
             intent_route=mem.intent_route,
+            route_family=route_family(mem.intent_route),
             route_reason=mem.route_reason,
             memory_used=mem.memory_used,
             memory_available=mem.memory_available,

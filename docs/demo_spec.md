@@ -967,18 +967,21 @@ Additions:
 \* `POST /query` accepts additive optional fields: `session_id`, `use_memory`,
   `memory_mode` (`off` | `structured`), and `reset_memory`.
 
-\* A deterministic, rule-based intent router selects one of `retrieve`,
-  `retrieve_with_memory`, `answer_from_history`, `clarify`, or `refuse`. Routing
-  never depends on a live LLM.
+\* A deterministic, rule-based intent router produces one of three high-level
+  outcomes (`route_family`): **retrieve**, **refuse**, or
+  **no_retrieval_response**. Internally these expand to five fine-grained
+  `intent_route` labels (`retrieve`, `retrieve_with_memory`,
+  `answer_from_history`, `ask_clarifying_question`, `refuse`) for debug and
+  tests. Routing never depends on a live LLM.
 
 \* Per-session structured memory is bounded (recent turns, citations, flags, and
   retrieved chunk IDs are all capped; excerpts and summaries are truncated). It
   is never an unlimited raw transcript and is not persisted.
 
-\* New debug fields (inside `debug`): `intent_route`, `route_reason`,
-  `memory_used`, `memory_available`, `memory_updated`, `memory_turn_count`,
-  `session_id`, `referenced_previous_answer`, `referenced_previous_evidence`,
-  `active_flags`, `active_citation_count`.
+\* New debug fields (inside `debug`): `intent_route`, `route_family`,
+  `route_reason`, `memory_used`, `memory_available`, `memory_updated`,
+  `memory_turn_count`, `session_id`, `referenced_previous_answer`,
+  `referenced_previous_evidence`, `active_flags`, `active_citation_count`.
 
 \* New inspection endpoints (demo/debug only, no auth):
   `GET /sessions/{session_id}/memory` and
