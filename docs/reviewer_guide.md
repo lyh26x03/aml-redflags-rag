@@ -33,6 +33,33 @@ Invoke-RestMethod http://localhost:8000/health
 .venv\Scripts\python.exe scripts\run_failure_diagnostics.py
 .venv\Scripts\python.exe -m pytest tests -q
 .venv\Scripts\python.exe scripts\run_reviewer_pack.py
+
+# Single-command pretty-print of one /query response (no extra deps):
+.venv\Scripts\python.exe scripts\manual_query_pretty.py
+```
+
+### `manual_query_pretty.py` — quick reviewer tool
+
+Sends one `/query` request and prints a human-readable summary of every
+reviewer-relevant field (assessment, flags, citations, refusal, debug).
+
+```powershell
+# defaults: hybrid retrieval, mock LLM, top_k=5
+.venv\Scripts\python.exe scripts\manual_query_pretty.py
+
+# override anything
+.venv\Scripts\python.exe scripts\manual_query_pretty.py `
+    --query "Customer wires funds to multiple offshore shell companies." `
+    --retrieval-mode dense `
+    --llm-mode mock `
+    --top-k 3
+
+# multi-turn session with memory
+.venv\Scripts\python.exe scripts\manual_query_pretty.py `
+    --session-id demo-session-1 --use-memory
+
+# point at a non-default server
+.venv\Scripts\python.exe scripts\manual_query_pretty.py --base-url http://localhost:9000
 ```
 
 The full profile in `requirements.txt` enables optional dense retrieval when its
