@@ -1,15 +1,27 @@
 # AML Red Flag RAG
 
-A runnable FastAPI demo and a notebook research archive for evidence-oriented
-anti-money-laundering red-flag analysis.
+A runnable FastAPI demo for evidence-oriented anti-money-laundering red-flag
+analysis. Demonstrates single-turn RAG, evidence-bound answers, citation
+references, scope-based refusal, debug metadata, optional live and local
+generation paths, and opt-in structured conversation memory with deterministic
+intent routing.
 
-本專案以洗錢防制（AML）紅旗辨識為應用場景，探索中英文文件的跨語言檢索、
-文件層級加權、Pre-LLM Gate，以及具引用依據的結構化判斷。現在的
-`repo-consolidation` 版本將 notebook 中的單輪核心流程整理成可執行的 FastAPI
-與 Docker Compose demo；多輪對話與 intent routing 仍保留在研究 notebook。
+本專案以洗錢防制（AML）紅旗辨識為應用場景，展示跨語言混合檢索、Pre-LLM Gate
+拒答、具引用依據的結構化生成、可選擇性啟用的多輪結構化對話記憶與確定性 intent
+routing，以及可選的本地 Ollama 生成路徑。這是一個以 AI 工程能力為核心的教學示
+範專案，不是 production AML 合規系統。
 
-This is an educational demo, not legal advice, a transaction-monitoring
-system, or a substitute for an AML investigator.
+This is an educational and evaluation-oriented AI engineering demo, not legal
+advice, a transaction-monitoring system, or a substitute for an AML investigator.
+
+## For Reviewers
+
+| Reader | Start here |
+|---|---|
+| HR / Recruiter | [`docs/hr_project_brief.md`](docs/hr_project_brief.md) |
+| Technical reviewer | [`docs/demo_evidence_pack.md`](docs/demo_evidence_pack.md) |
+| Interview preparation | [`docs/project_map_for_interview.md`](docs/project_map_for_interview.md) |
+| Structured memory design | [`docs/conversation_memory.md`](docs/conversation_memory.md) |
 
 ## Current Implementation Status
 
