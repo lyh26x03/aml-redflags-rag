@@ -65,8 +65,16 @@ Per chunk: `chunk_id` (e.g. `sample_va_p1_c0`), `text`, `page`, `source`, `sourc
 ### D6. Source preflight + commit discipline
 Stage 0 verifies `migration_staging/*.py` exists (it is gitignored and exists only in the main checkout at `C:\Users\USER\Documents\aml-redflags-rag`); if absent, extract code cells from `notebooks_archive/*.ipynb` via JSON parsing. Commit + push to `repo-consolidation` after each green stage. Rollback unit = `git revert <stage-commit>`; never force-push.
 
-### D7. Multi-turn / intent routing: NOT ported
+### D7. Multi-turn / intent routing: NOT ported *(superseded — see note)*
 Part 6 (`chat`, `TurnIntent`, `rewrite_query`, intent classification) depends on LLM intent classification and conversation state; no API surface in the spec. Marked **Planned** in README with a pointer to `experiment_rag_v4_display.ipynb`. Honesty beats feature count.
+
+> **Updated 2026-06-24:** This decision was overridden post-migration. PR #13
+> (`feat: add structured conversation memory and intent routing`) implemented an
+> opt-in, local, in-process, bounded structured memory layer with deterministic
+> (rule-based, no live-LLM) intent routing. The single-turn contract is fully
+> backward-compatible. See `rag_core/memory/`, `rag_core/intent_router.py`, and
+> `docs/conversation_memory.md`. LLM-based open-ended query rewriting remains
+> notebook-only.
 
 ### D8. Windows-friendly verification
 No curl-with-JSON examples. Contract tests use `fastapi.testclient.TestClient`; `tests/smoke_test.py` uses `httpx` against `SMOKE_BASE_URL` (default `http://localhost:8000`); README shows `Invoke-RestMethod` plus bash equivalents. Docker healthcheck = `python -c` urllib (slim image has no curl). Use `.venv\Scripts\python.exe` directly instead of profile-dependent activation.

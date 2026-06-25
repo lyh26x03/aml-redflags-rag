@@ -41,13 +41,22 @@ not part of the migration.
 
 ## Deferred and experimental
 
+> **Note (updated 2026-06-24):** Several items marked "Planned" at migration time have
+> since been implemented via post-migration PRs. See the table below for current status.
+
 | Feature | Disposition |
 |---|---|
 | Semantic scope classifier | Experimental; opt-in and dense-backend dependent |
 | Gemini and Groq generation | Experimental; key-gated with mock fallback |
-| Multi-turn chat and query rewriting | Planned; not exposed by the demo API |
-| Intent routing | Planned; remains notebook-only |
-| Evaluation framework and experiment logging | Deferred; remains notebook-only |
+| Gemma via Google AI Studio | Implemented — PR #8 (`feat: add Gemma Google AI Studio generation mode`) |
+| Configurable live LLM timeout | Implemented — PR #11 |
+| Ollama local generation mode | Implemented — PR #14 (`feat: add optional Ollama generation mode`) |
+| Public 226-chunk corpus profile | Implemented — integrated via `feat: integrate public corpus model matrix` |
+| Model matrix runner | Implemented — scripts/run_model_matrix.py |
+| Intent routing | Implemented — PR #13 (`feat: add structured conversation memory and intent routing`); deterministic rule-based, no LLM dependency; see `rag_core/intent_router.py` and `docs/conversation_memory.md` |
+| Structured conversation memory (multi-turn) | Implemented — PR #13; opt-in, local, in-process, bounded; see `rag_core/memory/` |
+| Multi-turn chat and query rewriting | Partially implemented — structured memory and deterministic routing are live; open-ended LLM-based query rewriting remains notebook-only |
+| Evaluation framework and experiment logging | Partial — API smoke, CQC-RAG Lite, multi-turn eval, failure diagnostics, and model matrix scripts committed; historical notebook-era experiment logger remains notebook-only |
 | Full private-corpus rebuild | Offline-only; raw PDFs are not available or committed |
 
 ## Artifact and safety policy

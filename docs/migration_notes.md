@@ -1,7 +1,7 @@
 # Migration Notes
 
-> Status: implementation complete on `repo-consolidation` (2026-06-11). Companion document: [implementation_plan.md](implementation_plan.md).
-> Scope of this document: an honest inventory of what exists, what migrates, what stays experimental, and what remains planned.
+> Status: initial migration complete on `repo-consolidation` (2026-06-11); post-migration additions documented in §12 (last updated 2026-06-24). Companion document: [implementation_plan.md](implementation_plan.md).
+> Scope of this document: an honest inventory of what exists, what migrates, what stays experimental, and what remains planned. See §12 for features added after the initial migration.
 
 ## 1. Current repo state
 
@@ -130,10 +130,15 @@ Colab-only parts to strip: `drive.mount`, `userdata.get()` for API keys, interac
 
 ## 7. Features implemented in notebook form only (not migrating now)
 
+> **Note (updated 2026-06-24):** Some items below were subsequently ported in
+> post-migration PRs. See §12 for the complete list of post-migration additions.
+
 - Retrieval evaluation framework (P@k / Recall@k / MRR, annotation helpers, 3-way method comparison).
 - `ExperimentLogger` and Drive-based experiment run logging.
-- Multi-turn chat: `chat()`, `chat_loop()`, query rewriting, conversation state.
-- Intent routing: `TurnIntent`, rule-based and LLM-based classification.
+- Multi-turn chat: `chat()`, `chat_loop()`, open-ended LLM-based query rewriting.
+  *(Structured deterministic conversation memory and intent routing were ported in PR #13 — see §12.)*
+- Intent routing: LLM-based intent classification and `TurnIntent` enum.
+  *(Rule-based deterministic routing was ported in PR #13 — see §12.)*
 - Multi-turn A/B testing and session annotation tooling.
 
 ## 8. Features to mark **experimental** in the demo
@@ -142,19 +147,28 @@ Colab-only parts to strip: `drive.mount`, `userdata.get()` for API keys, interac
 - **`SemanticScopeClassifier`**: ported but env-gated **off** by default (threshold 0.35 was never tuned beyond the notebook).
 - **Gemini / Groq live backends**: code present, key-gated; any error falls back to mock with an explicit flag. Untestable in this environment (no keys).
 
-## 9. Features to mark **planned** (not ported)
+## 9. Features to mark **planned** (not ported at migration time)
 
-- Multi-turn conversation + intent routing (v4 Part 6) — no API surface in the demo spec; pointer to `experiment_rag_v4_display.ipynb`.
-- Evaluation automation (eval endpoint or CLI re-running P@k/Recall/MRR).
-- `/ingest` or any document upload path.
-- Full-corpus index rebuild as part of the service (the offline script exists but needs the private PDFs).
+> **Note (updated 2026-06-24):** Several items below were subsequently implemented
+> in post-migration PRs. See §12 for the current status of each.
+
+- ~~Multi-turn conversation + intent routing (v4 Part 6)~~ → **Implemented in PR #13.**
+  Structured conversation memory (`rag_core/memory/`) and deterministic intent routing
+  (`rag_core/intent_router.py`) are opt-in, local, in-process, and bounded. LLM-based
+  open-ended query rewriting remains notebook-only.
+- Evaluation automation (eval endpoint or CLI re-running P@k/Recall/MRR) →
+  **Partially implemented.** `scripts/run_api_smoke_eval.py`, `run_cqc_eval.py`,
+  `run_multiturn_eval.py`, `run_failure_diagnostics.py`, and `run_model_matrix.py`
+  are committed. A full retrieval-benchmark re-runner remains planned.
+- `/ingest` or any document upload path → **Still planned.**
+- Full-corpus index rebuild as part of the service → **Still offline-only.**
 
 ## 10. Risks and assumptions
 
 1. **`migration_staging/` is local-only** (gitignored). If the implementation run happens in a fresh clone/worktree, the `.py` sources are missing → fall back to parsing `notebooks_archive/*.ipynb`. This is the single most likely failure of an unattended implementation run.
 2. **Raw PDFs are private and unavailable.** `indexing/build_data_v2.py` can be ported and syntax-checked but never executed end-to-end here. Do not fake its outputs.
 3. **No API keys available.** `LLM_MODE=mock` is the default and the only path verified in acceptance tests.
-4. **README currently overclaims** relative to runnable code (eval numbers are notebook-experiment results on the private 226-chunk corpus; multi-turn/intent routing exists only in notebooks). The honesty rewrite happens in one coherent commit at the final stage — do not partially edit README earlier.
+4. **README currently overclaims** relative to runnable code (eval numbers are notebook-experiment results on the private 226-chunk corpus; multi-turn/intent routing exists only in notebooks). The honesty rewrite happens in one coherent commit at the final stage — do not partially edit README earlier. *(Note: this risk was resolved — the README was rewritten in Stage 9 and subsequently kept current through post-migration PRs.)*
 5. **`.gitignore` blocks `artifacts/index/*`, `*.pkl`, `*.faiss`, `*.pdf`.** Committing the sample `chunks.json`/`manifest.json` requires explicit `!` exceptions placed after the `artifacts/index/*` rule, verified with `git check-ignore`. FAISS/pickle artifacts are never committed — both indexes are rebuilt in memory at startup.
 6. **`docs/demo_spec.md` contradictions** (resolved decisions, see implementation plan §"Spec reconciliation"):
    - Spec lists `faiss.index` / `bm25.pkl` under `artifacts/index/`, but committing them is banned → treated as local-only outputs of the offline indexing script.
@@ -199,3 +213,30 @@ Unverified by design or environment:
 - Full dense/hybrid runtime: embedding model download blocked; fallback behavior verified.
 - Groq/Gemini live calls: no API keys.
 - Full-corpus index build: private PDFs unavailable.
+
+---
+
+## 12. Post-migration additions (after `repo-consolidation` merged)
+
+The following features were added to `main` after the initial migration was complete.
+They are not part of the original staged implementation but are now live in the service.
+
+| Feature | PR / Commit | Status |
+|---|---|---|
+| CQC-RAG Lite evaluation harness | PR #3 | Implemented — `scripts/run_cqc_eval.py` |
+| CQC-RAG Lite Markdown report | PR #4 | Implemented |
+| Reviewer demo pack | PR #5 | Implemented — `scripts/run_reviewer_pack.py` |
+| Demo walkthrough doc | PR #6 | Implemented — `docs/demo_walkthrough.md` |
+| Failure Diagnostics Lite | PR #7 | Implemented — `scripts/run_failure_diagnostics.py` |
+| Gemma via Google AI Studio | PR #8 | Implemented — `llm_mode="gemma"`, key-gated |
+| Configurable live LLM timeout | PR #11 | Implemented — `LIVE_LLM_TIMEOUT_S` env var |
+| Structured conversation memory + deterministic intent routing | PR #13 | Implemented — `rag_core/memory/`, `rag_core/intent_router.py` |
+| Ollama local generation mode | PR #14 | Implemented — `llm_mode="ollama"` |
+| Public 226-chunk corpus profile | `feat: integrate public corpus model matrix` | Implemented — `data/public_corpus_226/`, `CORPUS_PROFILE=public_226` |
+| Model matrix runner | Integrated with public corpus | Implemented — `scripts/run_model_matrix.py` |
+| HR-readable project brief | `docs: add HR-readable project brief` | Implemented — `docs/hr_project_brief.md` |
+
+Items still remaining from the original §9 planned list:
+- `/ingest` document upload path — out of scope
+- Full-corpus index rebuild as a service feature — offline-only
+- Production memory persistence across workers — future work
