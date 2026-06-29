@@ -73,6 +73,8 @@ class _MemoryDebug:
     referenced_previous_evidence: bool = False
     active_flags: List[str] = field(default_factory=list)
     active_citation_count: int = 0
+    scenario_update_action: Optional[str] = None
+    case_delta_count: int = 0
 
 
 def _empty_generation_debug(llm_mode: str) -> Dict[str, Any]:
@@ -185,12 +187,12 @@ class RAGPipeline:
         memory = self.memory_store.get_or_create(ctx.request.session_id)
 
         retrieval_query = ctx.request.query
-        if use_memory_context and memory.active_scenario_summary:
-            # Compose prior scenario + the new question. This enriches the
-            # query string only; retrieval math is unchanged.
-            retrieval_query = (
-                f"{memory.active_scenario_summary}\n{ctx.request.query}"
-            )
+        if use_memory_context and memory.has_case_context:
+            # Compose the stable case backbone + accumulated follow-up deltas +
+            # the new question, so a memory follow-up keeps the original case
+            # context instead of drifting onto the latest short fragment. This
+            # enriches the query *string* only; retrieval math is unchanged.
+            retrieval_query = memory.compose_retrieval_query(ctx.request.query)
 
         generated, retrieval, generation_debug = self._retrieve_and_generate(
             retrieval_query, ctx
@@ -431,6 +433,8 @@ class RAGPipeline:
             referenced_previous_evidence=mem.referenced_previous_evidence,
             active_flags=mem.active_flags,
             active_citation_count=mem.active_citation_count,
+            scenario_update_action=mem.scenario_update_action,
+            case_delta_count=mem.case_delta_count,
         )
         return QueryResponse(**generated, debug=debug)
 
@@ -461,6 +465,8 @@ class RAGPipeline:
             referenced_previous_evidence=referenced_previous_evidence,
             active_flags=list(memory.active_flag_codes),
             active_citation_count=len(memory.active_citations),
+            scenario_update_action=memory.last_scenario_action or None,
+            case_delta_count=len(memory.active_case_deltas),
         )
 
     @staticmethod

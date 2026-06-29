@@ -153,6 +153,25 @@ FOLLOWUP_CONNECTOR = _compile(
     ]
 )
 
+# Whole-case questions: the user asks about the case *as a whole* ("combined
+# red flags", "overall risk", "綜合來看"). These carry no new signal of their
+# own but need the accumulated case context plus fresh retrieval, so — when
+# memory exists — they are treated as memory follow-ups rather than as a brand
+# new (context-free) retrieve. Memory-gated, so single-turn behavior is intact.
+CASE_SUMMARY_QUESTION = _compile(
+    [
+        r"\bcombined (red )?flags?\b",
+        r"\bcombined (case|risk|risks|scenario|picture)\b",
+        r"\boverall (risk|assessment|picture|red flags?)\b",
+        r"\ball (of )?(the )?(red )?flags?\b",
+        r"\bfull (picture|case|risk)\b",
+        r"綜合",
+        r"整體(風險|評估|判斷|來看|而言)",
+        r"全部.{0,6}(紅旗|風險|旗標)",
+        r"合併.{0,6}(風險|案例|情境|紅旗)",
+    ]
+)
+
 # Under-specified / vague phrasings that cannot be responsibly assessed.
 # e.g. "這樣有沒有問題？".
 VAGUE_PATTERN = _compile(
@@ -236,7 +255,9 @@ class IntentRouter:
 
         detected_topics = self.topic_detector.detect_topics(text)
         is_history = bool(HISTORY_REFERENCE.search(text))
-        is_followup = bool(FOLLOWUP_CONNECTOR.search(text))
+        is_followup = bool(FOLLOWUP_CONNECTOR.search(text)) or bool(
+            CASE_SUMMARY_QUESTION.search(text)
+        )
         is_vague = bool(VAGUE_PATTERN.search(text))
         is_out_of_scope = bool(OUT_OF_SCOPE.search(text)) and not detected_topics
 

@@ -55,6 +55,7 @@ not part of the migration.
 | Model matrix runner | Implemented — scripts/run_model_matrix.py |
 | Intent routing | Implemented — PR #13 (`feat: add structured conversation memory and intent routing`); deterministic rule-based, no LLM dependency; see `rag_core/intent_router.py` and `docs/conversation_memory.md` |
 | Structured conversation memory (multi-turn) | Implemented — PR #13; opt-in, local, in-process, bounded; see `rag_core/memory/` |
+| Scenario-state update policy (backbone + deltas) | Implemented — branch `memory-router-state-fix`; deterministic case-backbone vs follow-up-delta policy + drift detection/recovery in `rag_core/memory/scenario_policy.py`; fixes the `active_scenario_summary` overwrite drift; see `docs/conversation_memory.md` |
 | Multi-turn chat and query rewriting | Partially implemented — structured memory and deterministic routing are live; open-ended LLM-based query rewriting remains notebook-only |
 | Evaluation framework and experiment logging | Partial — API smoke, CQC-RAG Lite, multi-turn eval, failure diagnostics, and model matrix scripts committed; historical notebook-era experiment logger remains notebook-only |
 | Full private-corpus rebuild | Offline-only; raw PDFs are not available or committed |

@@ -285,9 +285,19 @@ The finer `debug.intent_route` keeps all five labels for debugging and tests.
 Memory keeps the active scenario, deduplicated red flags, previous citations,
 retrieved chunk IDs, prior assessment, a referenceable prior-answer summary,
 unresolved clarification needs, and a bounded list of recent turn summaries.
-Out-of-scope ("refuse") turns never pollute the active AML scenario. See
+Out-of-scope ("refuse") turns never pollute the active AML scenario.
+
+The active scenario is modeled as a **stable case backbone**
+(`active_scenario_summary`) plus a bounded list of **follow-up deltas**
+(`active_case_deltas`), governed by a deterministic scenario-update policy
+(`rag_core/memory/scenario_policy.py`). A follow-up adds a delta but never
+overwrites the backbone; only a genuinely new standalone case replaces it. This
+prevents the multi-turn drift where a short follow-up ("What about cross-border
+transfers?") used to erase the original case from the retrieval query. A
+lightweight drift detector (`debug.scenario_update_action`, the snapshot's
+`scenario_health`) surfaces and can recover from a degraded backbone. See
 [`docs/conversation_memory.md`](docs/conversation_memory.md) for the full
-schema, bounds, and routing policy.
+schema, bounds, scenario-state policy, and routing.
 
 Two-turn demo session (PowerShell):
 

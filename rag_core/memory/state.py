@@ -3,7 +3,8 @@
 ``ConversationMemory`` preserves the *useful* AML conversation state across
 turns without ever storing an unlimited raw transcript:
 
-- active scenario summary           (``active_scenario_summary``)
+- stable case backbone              (``active_scenario_summary``)
+- bounded per-turn refinements       (``active_case_deltas``)
 - active red flags (deduplicated)   (``active_flags``)
 - previous citations (bounded)      (``active_citations``)
 - previous retrieved chunk IDs      (``retrieved_chunk_ids``)
@@ -11,6 +12,15 @@ turns without ever storing an unlimited raw transcript:
 - referenceable prior answer        (``last_answer_summary``)
 - unresolved clarification needs    (``unresolved_questions``)
 - recent bounded turn summaries     (``recent_turns``)
+
+The case state is split into three roles so a short follow-up can no longer
+overwrite the active case (see ``scenario_policy`` and the test report
+``docs/active_scenario_summary_overwrite_test_report.md``):
+
+- ``active_scenario_summary`` — the **stable case backbone**; only the scenario
+  policy may change it (SEED a first case, REPLACE a new standalone case);
+- ``active_case_deltas`` — the **bounded refinements** that follow-up turns add;
+- ``recent_turns[].user_query`` — the **raw per-turn query**, for audit only.
 
 Every list is bounded and every free-text field is truncated. Mutations go
 through ``record_*`` helpers so the bounds are always enforced in one place.
@@ -21,6 +31,20 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
+
+from rag_core.memory.scenario_policy import (
+    ACTION_PRESERVE,
+    ACTION_REPAIR,
+    ACTION_REPLACE,
+    ACTION_SEED,
+    DELTA_SUMMARY_CHARS,
+    MAX_CASE_DELTAS,
+    ScenarioDecision,
+    ScenarioDriftReport,
+    decide_scenario_update,
+    detect_scenario_drift,
+    distill_delta,
+)
 
 # --- bounds (exported for tests and docs) ---
 MAX_RECENT_TURNS = 8
@@ -109,7 +133,17 @@ class ConversationMemory:
     session_id: str
     turn_count: int = 0
     recent_turns: List[TurnSummary] = field(default_factory=list)
+    # The case backbone: the stable summary of the active AML case. It is set
+    # once (SEED) and only changes when a genuinely new case is introduced
+    # (REPLACE) — never overwritten by a short follow-up. See scenario_policy.
     active_scenario_summary: str = ""
+    # Bounded, ordered refinements added by follow-up turns on the same case.
+    active_case_deltas: List[str] = field(default_factory=list)
+    # The seed/replace case text and the turn it was set on (audit + drift ref).
+    case_seed_text: str = ""
+    scenario_origin_turn: int = 0
+    # The scenario-policy action taken on the most recent retrieval turn.
+    last_scenario_action: str = ""
     active_entities_or_context_terms: List[str] = field(default_factory=list)
     active_flags: List[Dict[str, str]] = field(default_factory=list)
     active_citations: List[MemoryCitation] = field(default_factory=list)
@@ -131,6 +165,70 @@ class ConversationMemory:
     def active_flag_codes(self) -> List[str]:
         return [str(flag.get("code", "")) for flag in self.active_flags]
 
+    @property
+    def has_case_context(self) -> bool:
+        """True once there is a case backbone (or accumulated deltas) to reuse."""
+        return bool(self.active_scenario_summary or self.active_case_deltas)
+
+    def compose_retrieval_query(self, current_query: str) -> str:
+        """Compose ``backbone + deltas + current_query`` for memory retrieval.
+
+        This is the query *string* enrichment used by ``retrieve_with_memory``;
+        it preserves the original case context across follow-ups. Retrieval math
+        (BM25/dense/RRF) is unchanged — only the query text is enriched.
+        """
+        parts: List[str] = []
+        if self.active_scenario_summary:
+            parts.append(self.active_scenario_summary)
+        parts.extend(self.active_case_deltas)
+        current = " ".join(str(current_query or "").split())
+        if current:
+            parts.append(current)
+        return "\n".join(part for part in parts if part)
+
+    def preview_scenario_update(
+        self, *, intent_route: str, user_query: str, context_terms: List[str]
+    ) -> ScenarioDecision:
+        """Decide the scenario action without mutating state.
+
+        Lets the pipeline learn, before retrieval, whether this turn continues
+        the established case (so it should compose case context) or opens a new
+        one (so it should retrieve on its own query).
+        """
+        return decide_scenario_update(
+            current_query=user_query,
+            route=intent_route,
+            has_backbone=bool(self.active_scenario_summary),
+            new_topics=context_terms,
+            existing_topics=self.active_entities_or_context_terms,
+        )
+
+    def scenario_health(self) -> ScenarioDriftReport:
+        """Diagnose whether the case backbone has drifted (Option D)."""
+        return detect_scenario_drift(
+            backbone=self.active_scenario_summary,
+            reference=self.case_seed_text,
+        )
+
+    def repair_scenario(self) -> bool:
+        """Restore the case backbone from the recorded seed if it has drifted.
+
+        Defensive self-healing: the update policy already prevents drift, so in
+        normal operation this is a no-op. It exists so a corrupted backbone
+        (e.g. from external state mutation or a future regression) can be
+        recovered deterministically rather than poisoning later retrieval.
+        Returns ``True`` when a repair was applied.
+        """
+        if not self.scenario_health().drift:
+            return False
+        candidate = " ".join(str(self.case_seed_text or "").split())
+        if not candidate or candidate == self.active_scenario_summary:
+            return False
+        self.active_scenario_summary = _truncate(candidate, SCENARIO_SUMMARY_CHARS)
+        self.last_scenario_action = ACTION_REPAIR
+        self._touch()
+        return True
+
     # --- recording (each enforces the bounds) ---
 
     def record_retrieval_turn(
@@ -145,10 +243,19 @@ class ConversationMemory:
         retrieved_chunk_ids: List[str],
         context_terms: List[str],
     ) -> None:
-        """Record an evidence-retrieval turn — updates the active scenario."""
-        scenario = _truncate(user_query, SCENARIO_SUMMARY_CHARS)
-        if scenario:
-            self.active_scenario_summary = scenario
+        """Record an evidence-retrieval turn.
+
+        The case backbone (``active_scenario_summary``) is updated through the
+        deterministic scenario policy, *not* overwritten with the raw query, so
+        a short follow-up can no longer erase the active case. The decision runs
+        before the context-term merge so it compares this turn's topics against
+        the case established by earlier turns.
+        """
+        self._update_scenario(
+            intent_route=intent_route,
+            user_query=user_query,
+            context_terms=context_terms,
+        )
         self.last_answer_summary = _truncate(answer, ANSWER_SUMMARY_CHARS)
         self.last_assessment = assessment
 
@@ -208,6 +315,49 @@ class ConversationMemory:
         self.unresolved_questions = []
 
     # --- bounded mutators ---
+
+    def _update_scenario(
+        self, *, intent_route: str, user_query: str, context_terms: List[str]
+    ) -> None:
+        """Apply the scenario-update policy to the case backbone + deltas."""
+        decision = decide_scenario_update(
+            current_query=user_query,
+            route=intent_route,
+            has_backbone=bool(self.active_scenario_summary),
+            new_topics=context_terms,
+            existing_topics=self.active_entities_or_context_terms,
+        )
+        self.last_scenario_action = decision.action
+
+        if decision.action in (ACTION_SEED, ACTION_REPLACE):
+            backbone = _truncate(user_query, SCENARIO_SUMMARY_CHARS)
+            if not backbone:
+                return
+            self.active_scenario_summary = backbone
+            self.case_seed_text = backbone
+            self.scenario_origin_turn = self.turn_count + 1
+            self.active_case_deltas = []
+            if decision.action == ACTION_REPLACE:
+                # A new standalone case starts a fresh evidence scope so stale
+                # flags/citations/terms from the prior case cannot leak forward.
+                # The current turn's own merges repopulate them immediately
+                # after this call returns.
+                self.active_flags = []
+                self.active_citations = []
+                self.retrieved_chunk_ids = []
+                self.active_entities_or_context_terms = []
+        elif decision.action == ACTION_PRESERVE:
+            self._append_delta(user_query)
+        # ACTION_NOOP: nothing actionable (e.g. empty query) — leave state as is.
+
+    def _append_delta(self, query: str) -> None:
+        delta = _truncate(distill_delta(query), DELTA_SUMMARY_CHARS)
+        if not delta:
+            return
+        if delta.lower() in {existing.lower() for existing in self.active_case_deltas}:
+            return
+        self.active_case_deltas.append(delta)
+        self.active_case_deltas = self.active_case_deltas[-MAX_CASE_DELTAS:]
 
     def _append_turn(
         self,
@@ -304,6 +454,11 @@ class ConversationMemory:
             "session_id": self.session_id,
             "turn_count": self.turn_count,
             "active_scenario_summary": self.active_scenario_summary,
+            "active_case_deltas": list(self.active_case_deltas),
+            "case_seed_text": self.case_seed_text,
+            "scenario_origin_turn": self.scenario_origin_turn,
+            "last_scenario_action": self.last_scenario_action,
+            "scenario_health": self.scenario_health().to_dict(),
             "active_entities_or_context_terms": list(
                 self.active_entities_or_context_terms
             ),

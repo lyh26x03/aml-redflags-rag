@@ -93,7 +93,13 @@ which restates what is already known).
 Per `session_id`, `ConversationMemory` holds:
 
 - `session_id`, `turn_count`, `created_at`, `updated_at`
-- `active_scenario_summary` — latest retrieval scenario (truncated)
+- `active_scenario_summary` — the **stable case backbone** (truncated); set once
+  (SEED) and only changed when a new standalone case is introduced (REPLACE)
+- `active_case_deltas` — bounded, ordered **follow-up refinements** of the case
+- `case_seed_text`, `scenario_origin_turn` — the seed case text and the turn it
+  was set on (audit + drift reference)
+- `last_scenario_action` — the scenario-policy action taken on the last
+  retrieval turn (`seed`/`preserve`/`replace`/`repair`/`noop`)
 - `active_entities_or_context_terms` — detected AML topic terms (bounded, deduped)
 - `active_flags` — deduplicated red flags (`code`/`name`/`name_zh`)
 - `active_citations` — bounded list of `{chunk_id, source, excerpt}` (excerpt truncated)
@@ -102,26 +108,34 @@ Per `session_id`, `ConversationMemory` holds:
 - `unresolved_questions` — bounded clarification needs
 - `recent_turns` — bounded list of concise per-turn summaries
 
+The memory snapshot also reports a derived `scenario_health` diagnostic (see
+[Scenario-state update policy](#scenario-state-update-policy)).
+
 ### Bounds
 
 | Bound | Value |
 |---|---|
 | `recent_turns` | 8 |
+| `active_case_deltas` | 6 |
 | `active_citations` | 10 |
 | `active_flags` | 12 (deduped by code) |
 | `retrieved_chunk_ids` | 30 |
 | `active_entities_or_context_terms` | 20 |
 | `unresolved_questions` | 10 |
 | citation excerpt | 200 chars |
+| case delta | 200 chars |
 | scenario / answer / query summaries | 500 / 400 / 300 chars |
 | retained sessions (per process) | 256 (LRU-evicted) |
 
 ## Memory behavior by route
 
-- `retrieve` — updates the active scenario, flags, citations, chunk IDs, last
-  assessment/answer, and appends a recent turn.
-- `retrieve_with_memory` — same, but the retrieval query is composed from the
-  prior `active_scenario_summary` plus the new question. `memory_used = true`.
+- `retrieve` — runs the scenario policy (SEED the first case, PRESERVE a
+  refinement of the same case, or REPLACE with a new standalone case), then
+  updates flags, citations, chunk IDs, last assessment/answer, and appends a
+  recent turn.
+- `retrieve_with_memory` — the retrieval query is composed from the case
+  backbone **plus accumulated deltas plus** the new question, and the policy
+  always PRESERVEs (a follow-up never overwrites the backbone). `memory_used = true`.
 - `answer_from_history` — answers from memory (or returns a clear no-context
   message when nothing is stored); appends a recent turn; does not change the
   active scenario.
@@ -130,12 +144,59 @@ Per `session_id`, `ConversationMemory` holds:
 - `refuse` — returns a structured refusal and **does not modify memory at all**,
   so out-of-scope requests cannot pollute the active AML scenario state.
 
+## Scenario-state update policy
+
+The active AML case is split into three roles so a short follow-up can never
+erase the case being analyzed (the `active_scenario_summary` overwrite defect;
+see [`active_scenario_summary_overwrite_test_report.md`](active_scenario_summary_overwrite_test_report.md)):
+
+| Role | Field | Meaning |
+|---|---|---|
+| case backbone | `active_scenario_summary` | stable summary of the active case |
+| case deltas | `active_case_deltas` | bounded follow-up refinements |
+| raw turn query | `recent_turns[].user_query` | per-turn input, for audit only |
+
+`rag_core/memory/scenario_policy.py` decides exactly one action on the backbone
+per retrieval turn (surfaced as `debug.scenario_update_action`):
+
+| Action | When | Effect on backbone |
+|---|---|---|
+| `seed` | first substantive case (no backbone yet) | adopt this query as the backbone |
+| `preserve` | a follow-up (`retrieve_with_memory`) or an additive/related plain retrieve | keep backbone, append a bounded delta |
+| `replace` | a plain retrieve whose topics are disjoint from the case (a new standalone case) | replace backbone, clear deltas, start a fresh evidence scope |
+| `repair` | a degraded backbone is detected and recovered from the seed | restore backbone from `case_seed_text` |
+| `noop` | nothing actionable (e.g. empty query) | unchanged |
+
+The policy is deterministic (no live LLM). The new-case judgement is factored
+behind a pluggable `new_case_scorer` seam, with the rule-based scorer as the
+always-present fallback, so a learned scorer could replace it without changing
+callers. Retrieval for `retrieve_with_memory` composes
+`backbone + deltas + current_query`; the BM25/dense/RRF math is unchanged.
+
+A whole-case question with memory present ("What are the combined red flags?",
+"綜合來看…") is routed to `retrieve_with_memory` so it retrieves *with* the
+accumulated case context instead of as a context-free query.
+
+### Drift detection and recovery (memory failure detector)
+
+`detect_scenario_drift` is a deterministic token-overlap diagnostic (a
+lightweight stand-in for a representation-space probe) that flags a backbone
+which has become empty, too short, a follow-up fragment, or has lost the
+original case terms. It is exposed as `scenario_health` in the memory snapshot.
+`ConversationMemory.repair_scenario()` uses it to restore a corrupted backbone
+from the recorded seed — defensive, since the update policy already prevents
+drift in normal operation.
+
 ## Debug fields (inside `debug`)
 
 `intent_route`, `route_family`, `route_reason`, `memory_used`,
 `memory_available`, `memory_updated`, `memory_turn_count`, `session_id`,
 `referenced_previous_answer`, `referenced_previous_evidence`, `active_flags`,
-`active_citation_count`.
+`active_citation_count`, `scenario_update_action`, `case_delta_count`.
+
+`scenario_update_action` reports the scenario-policy action taken this turn
+(`seed`/`preserve`/`replace`/...) and `case_delta_count` the number of
+accumulated follow-up deltas, so the case-state evolution is auditable per turn.
 
 `route_family` is the high-level (three-outcome) view of `intent_route`; it is
 present for every request (including single-turn) and is derived

@@ -88,6 +88,11 @@ class RetrievalDebug(BaseModel):
     referenced_previous_evidence: bool = False
     active_flags: List[str] = Field(default_factory=list)
     active_citation_count: int = 0
+    # Scenario-state policy audit: which action the memory took on the case
+    # backbone this turn (seed/preserve/replace/...) and how many follow-up
+    # deltas are currently accumulated.
+    scenario_update_action: Optional[str] = None
+    case_delta_count: int = 0
 
 
 class QueryResponse(BaseModel):
@@ -158,6 +163,11 @@ class SessionMemoryResponse(BaseModel):
     session_id: str
     turn_count: int = 0
     active_scenario_summary: str = ""
+    active_case_deltas: List[str] = Field(default_factory=list)
+    case_seed_text: str = ""
+    scenario_origin_turn: int = 0
+    last_scenario_action: str = ""
+    scenario_health: Optional[dict] = None
     active_entities_or_context_terms: List[str] = Field(default_factory=list)
     active_flags: List[dict] = Field(default_factory=list)
     active_citations: List[MemoryCitationView] = Field(default_factory=list)
